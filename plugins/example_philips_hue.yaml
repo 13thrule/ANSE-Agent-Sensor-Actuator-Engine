@@ -1,0 +1,113 @@
+# Example ANSE Plugin: Philips Hue Smart Lights
+# 
+# This is a simple example showing how to integrate Philips Hue smart lights
+# into ANSE. In production, you would connect to real Hue Bridge API.
+
+name: philips_hue
+description: Control Philips Hue smart lights via bridge API
+
+# High sensitivity because we're controlling lights (affects world state)
+sensitivity: high
+
+# Rate limit to prevent overwhelming the Hue bridge
+rate_limit: 30
+
+author: ANSE Community
+version: "1.0.0"
+
+# Connection configuration (for documentation, not used automatically)
+# In production, you would load from environment variables or config files
+connection:
+  protocol: http
+  bridge_url: "http://hue-bridge.local/api"
+  api_key: "${HUE_API_KEY}"  # Load from environment
+
+tools:
+  # Turn on/off lights
+  - name: toggle_light
+    description: Turn a light on or off
+    parameters:
+      light_id:
+        type: string
+        required: true
+      state:
+        type: boolean
+        required: true
+    
+    handler: |
+      # In production, this would call the Hue API
+      # For demo purposes, just return success
+      light_id = kwargs.get('light_id')
+      state = kwargs.get('state')
+      
+      result = {
+          'light_id': light_id,
+          'state': 'on' if state else 'off',
+          'status': 'success'
+      }
+
+  # Set light brightness
+  - name: set_brightness
+    description: Set light brightness (0-254)
+    parameters:
+      light_id:
+        type: string
+        required: true
+      brightness:
+        type: integer
+        required: true
+    
+    handler: |
+      light_id = kwargs.get('light_id')
+      brightness = kwargs.get('brightness', 200)
+      
+      result = {
+          'light_id': light_id,
+          'brightness': max(0, min(254, brightness)),
+          'status': 'success'
+      }
+
+  # Set light color (RGB)
+  - name: set_color
+    description: Set light color in RGB format
+    parameters:
+      light_id:
+        type: string
+        required: true
+      red:
+        type: integer
+        required: true
+      green:
+        type: integer
+        required: true
+      blue:
+        type: integer
+        required: true
+    
+    handler: |
+      light_id = kwargs.get('light_id')
+      red = kwargs.get('red')
+      green = kwargs.get('green')
+      blue = kwargs.get('blue')
+      
+      result = {
+          'light_id': light_id,
+          'color': {'r': red, 'g': green, 'b': blue},
+          'status': 'success'
+      }
+
+  # Get all lights in group
+  - name: list_lights
+    description: List all available lights
+    returns:
+      lights:
+        - id: "1"
+          name: "Living Room"
+          state: "on"
+        - id: "2"
+          name: "Bedroom"
+          state: "off"
+        - id: "3"
+          name: "Kitchen"
+          state: "on"
+      group_count: 3

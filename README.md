@@ -985,8 +985,98 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 ---
 
+## Extending ANSE with Plugins
+
+ANSE's **plugin system** lets you add custom sensors, devices, and integrations **without modifying core code**:
+
+### Add a Custom Sensor in 5 Minutes
+
+**1. Create a plugin file** (`plugins/my_sensor.yaml`):
+```yaml
+name: my_temperature_sensor
+description: My smart temperature sensor
+
+tools:
+  - name: read_temp
+    description: Read current temperature
+    handler: |
+      result = {
+          'temperature': 23.5,
+          'unit': 'celsius',
+          'status': 'ok'
+      }
+```
+
+**2. Restart ANSE** — that's it!
+```bash
+python -m anse.engine_core
+```
+
+Your agent can now autonomously call your sensor:
+```
+Agent: "Check the temperature in the room"
+Engine calls: my_temperature_sensor_read_temp()
+Agent sees: temperature is 23.5°C
+```
+
+### For Developers: Python Plugins
+
+Complex integrations? Use Python classes:
+
+```python
+from anse.plugin import SensorPlugin
+
+class PhilipsHue(SensorPlugin):
+    name = "philips_hue"
+    description = "Control Philips Hue smart lights"
+    
+    async def toggle_light(self, light_id: int):
+        """Turn light on/off"""
+        # Your implementation here
+        return {'light_id': light_id, 'state': 'toggled'}
+```
+
+### Real-World Examples
+
+We include complete example plugins:
+- **Philips Hue** smart lights (`example_philips_hue.yaml`)
+- **Arduino robot arm** with servos (`example_arduino_servo.yaml`)
+- **Industrial Modbus PLC** via TCP (`example_modbus_plc.yaml`)
+- **Custom temperature sensor** (`_template_sensor.py`)
+
+### Who Should Use Plugins?
+
+✅ **Non-programmers**: Drop a YAML file, no coding needed  
+✅ **Hardware enthusiasts**: Connect Arduino, Raspberry Pi, IoT devices  
+✅ **Enterprise users**: Integrate with Modbus, SCADA, industrial equipment  
+✅ **API integrations**: Connect cloud services, databases, webhooks  
+
+### What Plugins Can't Do
+
+Plugins run with the same constraints as tools:
+- ❌ Can't modify ANSE core code
+- ❌ Can't bypass safety policies
+- ❌ Can't run infinite loops without yielding
+- ❌ Can't access privileged system resources (unless granted by policy)
+
+### Plugin Examples
+
+```
+# Drop YAML plugins in plugins/ directory
+plugins/
+├── my_zigbee_sensors.yaml      # Zigbee temperature sensors
+├── philips_hue.yaml            # Smart lights
+├── my_robot_arm.py             # Arduino-controlled robot arm
+└── warehouse_plc.yaml          # Industrial Modbus PLC
+```
+
+**[Full plugin documentation →](docs/PLUGINS.md)** | **[Plugin templates →](plugins)**
+
+---
+
 ## Documentation
 
+- **[PLUGINS.md](docs/PLUGINS.md)** — Complete guide to building plugins (YAML & Python templates, examples, best practices).
 - **[DESIGN.md](docs/DESIGN.md)** — Deep dive into architecture, async patterns, and design decisions.
 - **[API.md](docs/API.md)** — Complete API reference with examples for each tool.
 - **[QUICKSTART.md](docs/QUICKSTART.md)** — Hands-on guide to building your first agent.

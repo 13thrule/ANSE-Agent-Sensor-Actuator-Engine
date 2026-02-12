@@ -13,6 +13,7 @@ from anse.world_model import WorldModel
 from anse.agent_bridge import AgentBridge
 from anse.safety.permission import PermissionManager
 from anse.health import initialize_health_monitor
+from anse.plugin_loader import PluginLoader
 
 # Import tool implementations
 from anse.tools.video import capture_frame, list_cameras
@@ -73,6 +74,9 @@ class EngineCore:
         
         # Register built-in tools
         self._register_tools()
+        
+        # Load and register plugins
+        self._load_plugins()
         
         # Configure rate limits from policy
         self._configure_rate_limits()
@@ -217,6 +221,25 @@ class EngineCore:
         
         logger.info(f"Registered {len(self.tools.list_tools())} tools")
 
+    def _load_plugins(self) -> None:
+        """Load and register plugins from the plugins/ directory."""
+        try:
+            plugin_loader = PluginLoader(plugin_dir="plugins")
+            plugins = plugin_loader.load_all()
+            
+            if plugins:
+                logger.info(f"Found {len(plugins)} plugin(s), registering...")
+                plugin_loader.register_with_engine(self)
+                
+                for plugin_name, info in plugins.items():
+                    logger.info(f"✓ Loaded plugin: {plugin_name} ({info['type']})")
+            else:
+                logger.debug("No plugins found in plugins/ directory")
+        
+        except Exception as e:
+            logger.warning(f"Failed to load plugins: {e}")
+            # Don't crash if plugins fail to load - core engine should still work
+
     def _configure_rate_limits(self) -> None:
         """Configure rate limits from safety policy."""
         rate_limits = self.permissions.policy.get("rate_limits", {})
@@ -225,6 +248,33 @@ class EngineCore:
             if self.tools.has_tool(tool_name):
                 self.scheduler.set_rate_limit(tool_name, limit)
                 logger.info(f"Set rate limit for {tool_name}: {limit} calls/min")
+    
+    def register_tool(self, name: str, func, description: str = "", 
+                     parameters: dict = None, sensitivity: str = "low", 
+                     cost_hint: dict = None) -> None:
+        """Register a tool with the engine (used by plugin loader).
+        
+        Args:
+            name: Tool name
+            func: Async callable function
+            description: Tool description
+            parameters: Parameter schema
+            sensitivity: "low", "medium", or "high"
+            cost_hint: Cost hints for tool execution
+        """
+        if parameters is None:
+            parameters = {}
+        if cost_hint is None:
+            cost_hint = {"latency_ms": 100}
+        
+        self.tools.register(
+            name=name,
+            func=func,
+            schema={"type": "object", "properties": parameters},
+            description=description,
+            sensitivity=sensitivity,
+            cost_hint=cost_hint
+        )
 
     async def run(self, host: str = '127.0.0.1', port: int = 8765) -> None:
         """

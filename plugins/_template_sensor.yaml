@@ -1,0 +1,108 @@
+# ANSE Plugin Template - Sensor/Data Source
+# 
+# Copy this file and customize it for your own sensor or data source.
+# Rename to: my_sensor_name.yaml
+#
+# For Python-based plugins, see: _template_sensor.py
+
+name: example_thermometer
+description: Simulated temperature sensor that returns random values
+
+# Sensitivity level: low, medium, high
+# low:    Read-only, no impact on world state
+# medium: Can make external requests, moderate impact
+# high:   Can modify state, control hardware, potential side effects
+sensitivity: low
+
+# Rate limiting: calls per minute (0 = unlimited)
+rate_limit: 60
+
+# Author information (optional)
+author: Your Name
+version: "1.0.0"
+
+tools:
+  # First tool: Return current temperature
+  - name: get_temperature
+    description: Read current temperature in Celsius
+    
+    # Parameters the tool accepts (optional)
+    parameters:
+      sensor_id:
+        type: string
+        required: false
+      unit:
+        type: string
+        required: false
+        default: celsius
+    
+    # Inline Python code that executes when tool is called
+    # Available variables: kwargs (the input parameters)
+    # Must set: result variable with return value
+    handler: |
+      import random
+      sensor_id = kwargs.get('sensor_id', 'default')
+      unit = kwargs.get('unit', 'celsius')
+      
+      # Simulate reading temperature (20-30°C)
+      temp = round(20 + random.random() * 10, 2)
+      
+      result = {
+          'temperature': temp,
+          'unit': unit,
+          'sensor_id': sensor_id,
+          'status': 'ok'
+      }
+
+  # Second tool: Return humidity (static data)
+  - name: get_humidity
+    description: Read current humidity percentage
+    
+    # Tools without a handler return static data
+    returns:
+      humidity_percent: 65
+      status: ok
+      unit: percent
+
+  # Third tool: Get sensor status
+  - name: get_status
+    description: Get sensor status and battery level
+    
+    handler: |
+      result = {
+          'status': 'connected',
+          'battery_percent': 87,
+          'last_reading': '2026-02-12T10:30:00Z',
+          'uptime_hours': 48
+      }
+
+
+# Example YAML Plugin Structure:
+# 
+# Minimal plugin:
+#   name: my_tool
+#   description: What it does
+#   tools:
+#     - name: action_name
+#       description: What the action does
+#       returns: {key: value}
+#
+# Complex plugin with handler:
+#   name: my_device
+#   description: Controls a device
+#   sensitivity: high
+#   rate_limit: 30
+#   tools:
+#     - name: do_something
+#       description: Description
+#       parameters:
+#         param1:
+#           type: string
+#           required: true
+#         param2:
+#           type: integer
+#           required: false
+#       handler: |
+#         # Your Python code here
+#         # Access parameters via: kwargs.get('param1')
+#         # Return via: result = {...}

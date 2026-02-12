@@ -1,0 +1,139 @@
+# Example ANSE Plugin: Industrial Modbus PLC
+#
+# This example shows how to connect to an industrial PLC (Programmable Logic Controller)
+# via the Modbus protocol. Demonstrates sensor reading and control in factory environments.
+
+name: industrial_plc
+description: Read from and control industrial PLC via Modbus TCP protocol
+
+sensitivity: high  # Industrial equipment control
+rate_limit: 20  # Strict rate limit for industrial equipment
+
+author: ANSE Community
+version: "1.0.0"
+
+# Connection config (loaded from environment in production)
+connection:
+  protocol: modbus
+  host: "192.168.1.100"
+  port: 502
+  timeout: 5
+
+tools:
+  # Read sensor value
+  - name: read_sensor
+    description: Read analog sensor value from PLC
+    parameters:
+      sensor_id:
+        type: string
+        required: true
+      register:
+        type: integer
+        required: true
+
+    handler: |
+      import random
+      sensor_id = kwargs.get('sensor_id')
+      register = kwargs.get('register')
+      
+      # Simulate Modbus read
+      # In production: client.read_holding_registers(register, 1)
+      value = round(20 + random.random() * 15, 2)
+      
+      result = {
+          'sensor_id': sensor_id,
+          'value': value,
+          'unit': 'celsius',
+          'register': register,
+          'status': 'ok'
+      }
+
+  # Read discrete input (digital sensor)
+  - name: read_digital_input
+    description: Read digital input state from PLC
+    parameters:
+      input_id:
+        type: string
+        required: true
+      address:
+        type: integer
+        required: true
+
+    handler: |
+      input_id = kwargs.get('input_id')
+      address = kwargs.get('address')
+      
+      # Simulate Modbus digital read
+      state = address % 2 == 0
+      
+      result = {
+          'input_id': input_id,
+          'state': state,
+          'address': address,
+          'status': 'ok'
+      }
+
+  # Control output relay
+  - name: control_relay
+    description: Control output relay on PLC
+    parameters:
+      relay_id:
+        type: string
+        required: true
+      coil_address:
+        type: integer
+        required: true
+      state:
+        type: boolean
+        required: true
+
+    handler: |
+      relay_id = kwargs.get('relay_id')
+      state = kwargs.get('state')
+      address = kwargs.get('coil_address')
+      
+      # In production: client.write_coil(address, state)
+      
+      result = {
+          'relay_id': relay_id,
+          'state': state,
+          'address': address,
+          'status': 'success'
+      }
+
+  # Read multiple registers (block read)
+  - name: read_block
+    description: Read block of registers from PLC
+    parameters:
+      start_register:
+        type: integer
+        required: true
+      count:
+        type: integer
+        required: true
+
+    handler: |
+      import random
+      start_addr = kwargs.get('start_register')
+      count = kwargs.get('count', 10)
+      
+      # Simulate reading a block
+      values = [round(random.randint(100, 500), 0) for _ in range(count)]
+      
+      result = {
+          'start_register': start_addr,
+          'count': count,
+          'values': values,
+          'status': 'ok'
+      }
+
+  # Check PLC system status
+  - name: get_status
+    description: Get overall PLC system status
+    returns:
+      plc_name: Factory_Line_A
+      status: running
+      cycle_count: 4521
+      runtime_hours: 1248
+      temperature_celsius: 42
+      errors: []

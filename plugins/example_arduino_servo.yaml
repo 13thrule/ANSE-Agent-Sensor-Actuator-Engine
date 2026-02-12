@@ -1,0 +1,86 @@
+# Example ANSE Plugin: Arduino Robot Arm
+#
+# This example shows how to control an Arduino-based robot arm via USB serial.
+# Demonstrates using Python for more complex hardware interactions.
+
+name: arduino_robot
+description: Control Arduino-based robot arm with servo motors
+
+sensitivity: high  # Controlling physical hardware
+rate_limit: 60
+
+author: ANSE Community
+version: "1.0.0"
+
+tools:
+  # Move arm to position
+  - name: move_arm
+    description: Move robot arm to target position (0-180 degrees)
+    parameters:
+      servo_id:
+        type: integer
+        required: true
+      angle:
+        type: integer
+        required: true
+      speed:
+        type: integer
+        required: false
+
+    handler: |
+      import time
+      servo_id = kwargs.get('servo_id')
+      angle = kwargs.get('angle')
+      speed = kwargs.get('speed', 30)
+      
+      # Clamp angle to valid range
+      angle = max(0, min(180, angle))
+      
+      # In production, send to Arduino via serial:
+      # serial_port.write(f"MOVE {servo_id} {angle} {speed}\n")
+      # time.sleep(angle / speed)  # Wait for movement
+      
+      result = {
+          'servo_id': servo_id,
+          'target_angle': angle,
+          'speed': speed,
+          'status': 'moving'
+      }
+
+  # Stop all motors
+  - name: stop
+    description: Stop all motors immediately
+    handler: |
+      result = {
+          'status': 'stopped',
+          'message': 'All servos halted'
+      }
+
+  # Get arm position
+  - name: get_position
+    description: Get current position of all servos
+    returns:
+      servos:
+        - id: 0
+          angle: 90
+          speed: 0
+        - id: 1
+          angle: 45
+          speed: 0
+        - id: 2
+          angle: 135
+          speed: 0
+      status: idle
+
+  # Calibrate arms to home position
+  - name: home
+    description: Move all servos to home position (90 degrees)
+    handler: |
+      import time
+      # In production: send HOME command to Arduino
+      # time.sleep(2)  # Wait for movement
+      
+      result = {
+          'status': 'homed',
+          'message': 'All servos returned to home position'
+      }
