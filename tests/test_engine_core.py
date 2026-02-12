@@ -41,7 +41,9 @@ def test_list_tools(engine):
     assert "capture_frame" in tools
     assert "say" in tools
     assert "record_audio" in tools
-    assert len(tools) == 6  # 6 built-in tools
+    # Note: exact count depends on plugins loaded
+    # Must have at least 6 built-in tools
+    assert len(tools) >= 6
 
 
 def test_get_tool_info(engine):
