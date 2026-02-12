@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANSE Operator Console</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🤖 ANSE Operator Console</h1>
+                <div class="header-info">
+                    <span id="status-indicator" class="status-indicator status-connected"></span>
+                    <span id="status-text">Connected</span>
+                    <span class="divider">·</span>
+                    <span id="timestamp"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Sidebar: Agent List -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Active Agents</h2>
+                    <button id="refresh-agents" class="btn-small" title="Refresh agent list">↻</button>
+                </div>
+                <div id="agents-list" class="agents-list">
+                    <div class="loading">Loading agents...</div>
+                </div>
+            </aside>
+
+            <!-- Main Panel: Tabs -->
+            <main class="main-panel">
+                <!-- Tab Navigation -->
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="dashboard">
+                        📊 Dashboard
+                    </button>
+                    <button class="tab-button" data-tab="audit">
+                        📋 Audit Log
+                    </button>
+                    <button class="tab-button" data-tab="approve">
+                        ✅ Approval Console
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Dashboard Tab -->
+                    <div id="dashboard-tab" class="tab-pane active">
+                        <div class="dashboard-grid">
+                            <div class="card">
+                                <h3>Selected Agent</h3>
+                                <div id="agent-details" class="agent-details">
+                                    <p class="empty">Select an agent from the list</p>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3>System Health</h3>
+                                <div id="system-health" class="system-health">
+                                    <p class="empty">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3>Recent Events</h3>
+                                <div id="recent-events" class="recent-events">
+                                    <p class="empty">No events</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log Tab -->
+                    <div id="audit-tab" class="tab-pane">
+                        <div class="card">
+                            <div class="audit-controls">
+                                <input
+                                    type="text"
+                                    id="audit-filter-tool"
+                                    placeholder="Filter by tool..."
+                                    class="input-field"
+                                >
+                                <button id="audit-refresh" class="btn-primary">Refresh</button>
+                            </div>
+                            <div id="audit-stream" class="audit-stream">
+                                <p class="empty">Loading audit log...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Approval Console Tab -->
+                    <div id="approve-tab" class="tab-pane">
+                        <div class="card">
+                            <h3>Issue Approval Token</h3>
+                            <form id="approval-form" class="approval-form">
+                                <div class="form-group">
+                                    <label for="approve-agent">Agent ID:</label>
+                                    <input
+                                        type="text"
+                                        id="approve-agent"
+                                        placeholder="e.g., agent-001"
+                                        class="input-field"
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="approve-scope">Scope:</label>
+                                    <select id="approve-scope" class="input-field" required>
+                                        <option value="">-- Select scope --</option>
+                                        <option value="camera">📷 Camera (capture_frame)</option>
+                                        <option value="microphone">🎤 Microphone (record_audio)</option>
+                                        <option value="camera,microphone">📷 🎤 Camera + Microphone</option>
+                                        <option value="filesystem">📁 Filesystem (read/write)</option>
+                                        <option value="network">🌐 Network (http, dns)</option>
+                                        <option value="all">🔐 All Tools</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="approve-ttl">Time-to-Live (seconds):</label>
+                                    <input
+                                        type="number"
+                                        id="approve-ttl"
+                                        value="300"
+                                        min="60"
+                                        max="3600"
+                                        class="input-field"
+                                    >
+                                </div>
+
+                                <button type="submit" class="btn-primary btn-large">
+                                    Issue Token
+                                </button>
+                            </form>
+
+                            <div id="token-result" class="token-result hidden">
+                                <h4>✅ Token Issued</h4>
+                                <div class="token-display">
+                                    <pre id="token-value"></pre>
+                                    <button id="token-copy" class="btn-small">Copy</button>
+                                </div>
+                                <p class="token-info">
+                                    Expires: <span id="token-expires"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Active Tokens</h3>
+                            <div id="active-tokens" class="tokens-list">
+                                <p class="empty">No tokens issued</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
