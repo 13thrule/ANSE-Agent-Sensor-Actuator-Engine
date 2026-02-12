@@ -451,6 +451,7 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 - **[DESIGN.md](docs/DESIGN.md)** — Deep dive into architecture, async patterns, and design decisions.
 - **[API.md](docs/API.md)** — Complete API reference with examples for each tool.
 - **[QUICKSTART.md](docs/QUICKSTART.md)** — Hands-on guide to building your first agent.
+- **[ROADMAP.md](ROADMAP.md)** — Development roadmap v0.2–0.3 (Operator UI, Simulated sensors, Multiagent isolation, LLM adapter).
 
 ---
 
