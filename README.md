@@ -4,6 +4,43 @@
 
 ---
 
+## 🤖 Autonomous Agent Demo
+
+**NEW:** See ANSE in action with a working autonomous agent that proves real sensor data processing!
+
+```bash
+python agent_demo.py
+```
+
+**What it does:**
+- ✅ Discovers 8 available tools (camera, microphone, speaker, analysis)
+- ✅ Autonomously decides which tools to use based on task
+- ✅ Captures frame from camera (640×480 RGB)
+- ✅ Analyzes frame using computer vision (detects 9,866 edges, 554 corners)
+- ✅ Records audio from microphone (2.0s @ 16kHz)
+- ✅ Analyzes audio using FFT (extracts dominant frequencies: 223, 219, 212 Hz)
+- ✅ Speaks result using text-to-speech
+- ✅ Maintains memory log of all actions
+
+**Output Example:**
+```
+🎯 Task: I can see, listen, and speak. Show me what you can do!
+
+✓ Calling capture_frame() → 640×480 RGB image saved
+✓ Calling analyze_frame() → 9,866 edges | 554 corners | Avg color BGR(43,52,71)
+
+✓ Calling record_audio() → 2.0s @ 16kHz saved
+✓ Calling analyze_audio() → RMS: 0.0206 | Peak: 0.1689 | Freqs: [223, 219, 212, 232, 212] Hz
+
+✓ Calling say() → "I am an autonomous agent powered by ANSE"
+
+📝 Agent memory: 5 events tracked with timestamps
+```
+
+**See:** [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for full technical details.
+
+---
+
 ## 🚀 What ANSE Offers: Why Integrate Your APIs?
 
 ### The Problem You're Solving
