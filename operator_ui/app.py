@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Optional, Tuple
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
 from .models import db, Agent, ApprovalToken, AuditEvent, init_db
@@ -61,6 +61,11 @@ def create_app(config=None):
         return decorated
 
     # Routes
+    @app.route("/", methods=["GET"])
+    def index():
+        """Serve the operator UI dashboard."""
+        return render_template("index.html")
+
     @app.route("/health", methods=["GET"])
     def health():
         """Health check."""
