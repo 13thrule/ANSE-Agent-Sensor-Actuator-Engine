@@ -1,0 +1,50 @@
+# ANSE Safety Policy Configuration
+
+# Default scopes granted to all agents
+default_scopes:
+  - camera:read:dev
+  - microphone:read:dev
+  - tts:output:dev
+
+# Sensitive scopes requiring explicit approval
+sensitive_scopes:
+  - network:outbound
+  - filesystem:write
+  - actuator:control
+  - camera:read:production
+  - microphone:read:production
+
+# Rate limits per tool (calls per minute)
+rate_limits:
+  capture_frame: 30
+  record_audio: 10
+  say: 20
+
+# Tools requiring human approval before execution
+approval_required:
+  - network:outbound
+  - actuator:control
+  - filesystem:write
+
+# Data retention policies
+retention:
+  # How long to keep raw media files (seconds)
+  raw_media_ttl_seconds: 3600
+  # How long to keep event logs (seconds)
+  event_log_ttl_seconds: 86400
+  # Maximum storage per agent (bytes)
+  max_storage_per_agent: 1073741824  # 1 GB
+
+# Timeout settings
+timeouts:
+  # Default tool execution timeout (seconds)
+  default_call_timeout: 30.0
+  # Maximum allowed timeout (seconds)
+  max_call_timeout: 300.0
+
+# Agent isolation
+isolation:
+  # Whether agents can see each other's data
+  agent_isolation_enabled: true
+  # Shared workspace for multi-agent collaboration
+  shared_workspace_enabled: false

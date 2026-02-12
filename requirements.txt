@@ -1,0 +1,7 @@
+websockets>=10.0
+opencv-python>=4.5.0
+sounddevice>=0.4.0
+soundfile>=0.11.0
+pyttsx3>=2.90
+pyyaml>=6.0
+numpy>=1.20.0
