@@ -14,14 +14,16 @@ def _blocking_record_audio(
     out_dir: str,
 ) -> Dict[str, Any]:
     """Blocking implementation of audio recording."""
+    if duration <= 0 or duration > 60:
+        return {"error": "invalid_duration", "message": "Duration must be between 0 and 60 seconds"}
+    
     try:
         import sounddevice as sd
         import soundfile as sf
     except ImportError as e:
         return {"error": f"missing_dependency: {str(e)}"}
-    
-    if duration <= 0 or duration > 60:
-        return {"error": "invalid_duration", "message": "Duration must be between 0 and 60 seconds"}
+    except OSError as e:
+        return {"error": "portaudio_not_found", "message": str(e)}
     
     try:
         os.makedirs(out_dir, exist_ok=True)
@@ -83,6 +85,8 @@ def _blocking_list_audio_devices() -> Dict[str, Any]:
         import sounddevice as sd
     except ImportError:
         return {"error": "sounddevice not installed"}
+    except OSError:
+        return {"error": "portaudio_not_found"}
     
     try:
         devices = sd.query_devices()

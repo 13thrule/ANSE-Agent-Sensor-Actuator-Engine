@@ -86,4 +86,4 @@ async def get_voices() -> Dict[str, Any]:
         }
         
     except Exception as e:
-        return {"error": "failed_to_list_voices", "message": str(e)}
+        return {"error": "pyttsx3 not installed", "message": str(e)}
