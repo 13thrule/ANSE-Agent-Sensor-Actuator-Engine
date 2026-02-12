@@ -12,6 +12,7 @@ from anse.tool_registry import ToolRegistry
 from anse.world_model import WorldModel
 from anse.scheduler import Scheduler
 from anse.safety.permission import PermissionManager
+from anse.health import get_health_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +118,14 @@ class AgentBridge:
             if info is None:
                 return {"error": "tool_not_found", "tool": tool_name}
             return {"result": info}
+
+        elif method == "health":
+            monitor = get_health_monitor()
+            return {"result": monitor.get_status()}
+
+        elif method == "diagnostics":
+            monitor = get_health_monitor()
+            return {"result": monitor.get_diagnostics()}
 
         elif method == "ping":
             return {"result": "pong"}

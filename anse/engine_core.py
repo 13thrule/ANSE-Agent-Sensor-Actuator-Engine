@@ -11,6 +11,7 @@ from anse.scheduler import Scheduler
 from anse.world_model import WorldModel
 from anse.agent_bridge import AgentBridge
 from anse.safety.permission import PermissionManager
+from anse.health import initialize_health_monitor
 
 # Import tool implementations
 from anse.tools.video import capture_frame, list_cameras
@@ -37,6 +38,9 @@ class EngineCore:
             policy_path: Path to safety policy YAML file
         """
         logger.info("Initializing ANSE Engine Core")
+        
+        # Initialize health monitor
+        self.health = initialize_health_monitor()
         
         # Initialize subsystems
         self.tools = ToolRegistry()
