@@ -1,10 +1,42 @@
 # ANSE — Agent Nervous System Engine
 
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Tests Passing](https://img.shields.io/badge/tests-111%20passing-brightgreen.svg)
+![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+[![GitHub stars](https://img.shields.io/github/stars/13thrule/ANSE-Agent-Nervous-System-Engine?style=social)](https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine)
+
 > **Stop wishing AI could see. Make it happen in 5 minutes.**
 
 ANSE connects Claude, GPT-4, or any LLM to **cameras, microphones, and speakers** with zero boilerplate. Build autonomous agents that actually *see and hear the world*.
 
-**[Try the demo →](#-autonomous-agent-demo) | [See what you can build →](#-real-world-use-cases) | [Quick start →](#-5-minute-setup)**
+**[Try the demo →](#-autonomous-agent-demo) | [See what you can build →](#-real-world-use-cases) | [Quick start →](#-5-minute-setup) | [Plugin system →](#extending-anse-with-plugins)**
+
+---
+
+## About ANSE
+
+**ANSE** is an open-source **runtime engine** that gives Large Language Models real-world perception and control capabilities. Instead of writing boilerplate sensor integration code in every project, ANSE handles:
+
+- 📸 **Vision**: Autonomous camera access with real-time frame analysis
+- 🎤 **Audio**: Microphone recording and speech analysis
+- 🔊 **Speech**: Text-to-speech with multiple voices
+- 🔌 **Extensibility**: Plugin system for custom sensors (Zigbee, Arduino, IoT, Modbus)
+- 🔒 **Safety**: Built-in rate limits, audit trails, permission scopes
+- 📋 **Compliance**: SHA256-signed immutable event logs
+
+Perfect for:
+- **Embodied AI**: Robots that see and respond
+- **IoT Automation**: Devices that make decisions based on sensor data
+- **Quality Control**: Vision-based defect detection
+- **Healthcare**: Patient monitoring and fall detection
+- **Smart Homes**: Actually autonomous (not scripted) agent control
+
+---
+
+> **GitHub Topics:** AI, Autonomous Agents, LLM, Computer Vision, Robotics, IoT, Python
+> 
+> **Technologies:** Python 3.11+ | WebSocket JSON-RPC | Async/Await | OpenCV | Soundfile | pyttsx3
 
 ---
 
