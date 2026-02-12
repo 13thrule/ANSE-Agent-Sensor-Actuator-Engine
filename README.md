@@ -4,31 +4,356 @@
 
 ---
 
-## Overview
+## 🚀 What ANSE Offers: Why Integrate Your APIs?
 
-### What ANSE Does
+### The Problem You're Solving
 
-- **Exposes hardware and simulated devices as callable tools** rather than preprocessed observations. Agents interact with raw capabilities.
+Your APIs are powerful, but how do LLMs and autonomous agents actually *discover* and *use* them?
 
-- **Lets any agent (LLM, scripted controller, RL policy) discover capabilities, plan which to use, and invoke them** over a simple JSON‑RPC/WebSocket bridge.
+- ❌ Manual prompt engineering: "Here are 47 endpoints you could use..."
+- ❌ Rigid orchestration: "Agent, you must call `step_1()`, then `step_2()`"
+- ❌ Black-box decisions: No visibility into why the agent chose that action
+- ❌ No safety guardrails: Agents can't be trusted with high-risk operations
 
-- **Maintains an append‑only event store and structured audit logs** for reproducibility, debugging, and compliance.
+### The ANSE Solution
 
-- **Provides minimal, high‑impact safety primitives** so agents retain agency while high‑risk actions remain governed.
+**Plug your APIs into ANSE and get:**
 
-### Why It Matters
-
-| Value | Benefit |
-|-------|---------|
-| **Active Sensing** | Agents learn tool use and discover what to observe instead of consuming curated data. |
-| **Sim→Real Transfer** | Sim and real share the same API so policies trained offline transfer cleanly to hardware. |
-| **Privacy & Sovereignty** | Local‑first design keeps raw media on the host and preserves user privacy by default. |
-| **Reproducibility** | Deterministic tick scheduler and JSONL event logs enable replayable, debuggable experiments. |
-| **Audit Trail** | SHA256-hashed immutable logs for provenance, compliance, and operational transparency. |
+| Benefit | What You Get |
+|---------|-------------|
+| **Autonomous Discovery** | Agents see your API schemas and learn when to call what. No prompt engineering needed. |
+| **Complete Visibility** | Every action logged, timestamped, and signed. Audit trails for compliance. Know exactly what happened. |
+| **Safety by Default** | Per-agent rate limits, resource quotas, approval gates. High-risk actions require human sign-off. |
+| **LLM Ready** | Works with Claude, GPT-4, open source models. Function-calling loops just work. |
+| **Reproducible** | Deterministic execution with replay capability. Train in sim, deploy to real seamlessly. |
+| **Language Agnostic** | WebSocket JSON-RPC. Your API can be Python, Node.js, Go, anything. |
 
 ---
 
-## Key Features
+## 💡 Real-World Use Cases
+
+### Use Case 1: Embodied AI Assistant
+Build an AI that controls your home or business.
+
+```python
+# Your APIs
+- control_lights(room, brightness)
+- adjust_temperature(target_temp)
+- open_door(door_id)
+- get_camera_feed(camera_id)
+
+# What happens
+Claude connects to ANSE → sees your APIs → decides autonomously when to turn on lights,
+adjust AC, unlock doors based on voice commands. You get a full audit trail.
+Every action logged. Human approval can gate sensitive operations (unlock doors).
+```
+
+### Use Case 2: Research Agent
+Train an agent to learn tool use in simulation, then transfer to real robots.
+
+```python
+# Your APIs (simulated)
+- simulate_robot_arm(x, y, z)
+- simulate_gripper(force)
+- simulate_camera()
+
+# What happens
+Agent trains offline with perfect reproducibility (seeded randomness).
+Agent learns when to reach, when to grip, what to observe.
+Then deploy the same trained policy to real robot—APIs are identical.
+```
+
+### Use Case 3: Compliance Automation
+Build an agent that executes workflows while maintaining an immutable audit trail.
+
+```python
+# Your APIs
+- create_invoice(customer, amount)
+- approve_transaction(id, approval_code)
+- log_entry(event)
+- send_notification(recipient, message)
+
+# What happens
+Agent executes your workflow. Every step is logged with SHA256 hashes.
+Non-repudiation: who authorized what, when, and why.
+Export audit trail for regulators. Replay any incident for debugging.
+```
+
+---
+
+## 📊 Integration Benefits at a Glance
+
+| Aspect | Benefit |
+|--------|---------|
+| **Developer Effort** | Register your APIs once; agents discover them automatically. No glue code. |
+| **Safety & Trust** | Rate limits, approval gates, per-agent quotas, immutable audit logs. |
+| **Debugging** | Replay any execution deterministically. See exactly what happened, why. |
+| **Scaling** | Multi-agent isolation. 100+ agents per engine without interference. |
+| **Cost Control** | Per-agent quotas and rate limits prevent runaway API calls. |
+| **Compliance** | Signed, immutable audit logs. Full provenance of every action. |
+
+---
+
+## 🤖 Claude Plugin Integration
+
+ANSE can be deployed as a **Claude Plugin** so you can use Claude directly to control your APIs.
+
+### How It Works
+
+1. **Deploy ANSE Endpoint**: Run ANSE with your APIs registered
+2. **Install Claude Plugin**: Point Claude to your ANSE WebSocket endpoint
+3. **Claude Discovers APIs**: Claude reads your API schemas
+4. **Claude Controls**: Chat with Claude; it decides which APIs to call
+5. **Full Audit Trail**: Every action logged and signed
+
+### Example: Claude Plugin in Action
+
+```
+You: "Turn on the living room lights to 80% brightness and set temperature to 72°F"
+
+Claude (via ANSE plugin):
+  ✓ Calls: control_lights("living room", 80)
+  ✓ Calls: adjust_temperature(72)
+  ✓ Logs: Both actions to audit trail with timestamps
+
+Response: "Done! Lights are at 80% and temperature is set to 72°F."
+```
+
+### Setting Up Claude Plugin
+
+1. **Register ANSE as a capability source:**
+   ```bash
+   # Start ANSE
+   python -m anse.engine_core
+   
+   # Your ANSE endpoint is now: ws://127.0.0.1:8765
+   ```
+
+2. **Configure Claude Plugin Manifest:**
+   ```json
+   {
+     "schema_version": "v1",
+     "name_for_human": "ANSE API Integration",
+     "name_for_model": "anse_api_gateway",
+     "description_for_human": "Execute APIs safely with audit logging",
+     "description_for_model": "Access to registered APIs with safety constraints",
+     "auth": {
+       "type": "none"
+     },
+     "api": {
+       "type": "websocket",
+       "url": "ws://127.0.0.1:8765"
+     },
+     "contact_email": "your-email@example.com",
+     "legal_info_url": "https://your-domain.com/legal"
+   }
+   ```
+
+3. **Claude Automatically**:
+   - Discovers all registered APIs
+   - Understands rate limits and safety constraints
+   - Respects approval gates for sensitive operations
+   - Logs every action to the audit trail
+
+---
+
+## 📋 Register Your APIs (5-Minute Setup)
+
+Getting your APIs into ANSE is trivial. Here's the pattern:
+
+### Step 1: Wrap Your API
+
+```python
+# my_company_tools.py
+async def transfer_funds(from_account: str, to_account: str, amount: float) -> dict:
+    """Transfer funds between accounts."""
+    # Your implementation
+    result = await call_your_bank_api(from_account, to_account, amount)
+    return {
+        "status": "success",
+        "transaction_id": result["id"],
+        "amount": amount,
+        "timestamp": datetime.now().isoformat()
+    }
+
+async def get_account_balance(account_id: str) -> dict:
+    """Fetch the current balance of an account."""
+    balance = await call_your_bank_api_get_balance(account_id)
+    return {
+        "account_id": account_id,
+        "balance": balance,
+        "currency": "USD"
+    }
+```
+
+### Step 2: Register with ANSE
+
+Create `register_company_apis.py`:
+
+```python
+from anse.tool_registry import register_tool
+from my_company_tools import transfer_funds, get_account_balance
+
+# Register read-only API (no approval needed)
+register_tool(
+    get_account_balance,
+    description="Check the balance of a bank account",
+    sensitivity="public",  # No approval required
+    cost=0.01,  # Cost hint for Claude
+)
+
+# Register high-risk API (requires approval)
+register_tool(
+    transfer_funds,
+    description="Transfer funds between accounts (requires approval)",
+    sensitivity="private",  # Requires human approval
+    cost=1.0,  # Expensive operation
+    requires_approval=True,
+)
+
+print("✓ APIs registered! Start the engine with: python -m anse.engine_core")
+```
+
+### Step 3: Start the Engine
+
+```bash
+# Run your registration script
+python register_company_apis.py
+
+# Start ANSE engine
+python -m anse.engine_core
+```
+
+Your APIs are now discoverable by Claude and other LLM agents!
+
+### Step 4: Use from Claude
+
+Claude automatically discovers your APIs:
+
+```
+You: "What's the balance of account ACC123 and transfer $500 to ACC456"
+
+Claude:
+  ✓ Calls: get_account_balance("ACC123")
+  ✓ Returns: {"balance": 5000.00, ...}
+  ✓ Requests approval for: transfer_funds(...)
+  ⏳ Awaiting human approval...
+  ✓ Approval received
+  ✓ Calls: transfer_funds("ACC123", "ACC456", 500)
+  ✓ Result: {"transaction_id": "TXN-2026-001", ...}
+  ✓ Audit logged: SHA256-signed entry
+
+Response: "Account ACC123 has a balance of $5,000.00. I've transferred $500 to ACC456 (Transaction ID: TXN-2026-001). You can see the full transaction details in the audit log."
+```
+
+---
+
+## 🔐 API Safety Features
+
+Every API you register gets these for free:
+
+| Feature | Benefit |
+|---------|---------|
+| **Approval Gates** | Mark sensitive APIs as `sensitivity="private"`. Humans must approve before execution. |
+| **Rate Limiting** | Prevent abuse. Set max calls/minute per API per agent. |
+| **Quotas** | Per-agent resource limits. Agents can't run up your API bill. |
+| **Immutable Audit Trail** | Every call logged with SHA256 signatures. Regulators can verify the chain of custody. |
+| **Error Handling** | APIs that crash are gracefully caught. Errors logged. No cascading failures. |
+| **Replay** | Deterministically replay any execution from audit logs. Debug incidents in minutes. |
+
+---
+
+## 🛡️ Compliance & Audit Logging
+
+Here's what the audit log looks like:
+
+```json
+{
+  "timestamp": "2026-02-12T14:30:45.123456Z",
+  "event_id": "EVT-2026-001842",
+  "agent_id": "claude-assistant-prod-001",
+  "api_called": "transfer_funds",
+  "arguments": {
+    "from_account": "ACC123",
+    "to_account": "ACC456",
+    "amount": 500.0
+  },
+  "result": {
+    "status": "success",
+    "transaction_id": "TXN-2026-001",
+    "timestamp": "2026-02-12T14:30:46.654321Z"
+  },
+  "approval_token": "APPROVED_BY_alice@company.com_2026-02-12T14:30:44Z",
+  "execution_time_ms": 1231,
+  "error": null,
+  "audit_hash": "sha256:abc123def456...",
+  "previous_hash": "sha256:xyz789uvw012..."  // Links to prior entry
+}
+```
+
+**Non-repudiation guarantee:** The agent can't deny calling your API. The approval token proves a human authorized it. The hash chain proves no tampering.
+
+---
+
+## 💰 Billing & Cost Tracking
+
+Each API has a cost hint. Claude optimizes calls:
+
+```python
+register_tool(
+    expensive_ml_inference,
+    cost=10.0,  # 10 cents per call
+)
+
+register_tool(
+    cheap_lookup,
+    cost=0.01,  # 1 cent per call
+)
+```
+
+Claude sees these hints and:
+- ✅ Prefers cheaper APIs when possible
+- ✅ Batches calls to reduce overhead
+- ✅ Informs the user of costs upfront
+
+Audit logs track actual costs. You can bill agents back per their API usage.
+
+---
+
+## Why Your APIs Belong in ANSE
+
+### 1. **Agents Will Use Them Better**
+Your APIs are discoverable, but are they discoverable to LLMs? ANSE exposes them as first-class capabilities with:
+- Full schemas (inputs, outputs, errors)
+- Rate limits and safety constraints
+- Sensitivity labels ("this is risky")
+- Cost hints ("this is expensive")
+
+Agents learn to use them optimally.
+
+### 2. **You Get Compliance for Free**
+- ✅ Immutable audit logs (SHA256 signed)
+- ✅ User attribution (who called what, when)
+- ✅ Non-repudiation (agent can't deny it called your API)
+- ✅ Replay capability (debug any incident)
+
+### 3. **Safety is Built-In**
+- ✅ Per-agent rate limits (prevent abuse)
+- ✅ Resource quotas (prevent runaway costs)
+- ✅ Approval gates (humans approve risky operations)
+- ✅ Sandboxed execution (agents can't escape)
+
+### 4. **Your Investment Pays Off Across Models**
+Register once → works with Claude, GPT-4, Llama, any LLM that supports tool use. Your APIs are model-agnostic.
+
+### 5. **Sim→Real Transfer**
+- Train agents in simulation (safe, cheap)
+- Deploy to production (same code, real data)
+- Zero friction: APIs are identical
+
+---
+
+
 
 ### Core Capabilities
 
