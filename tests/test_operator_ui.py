@@ -352,5 +352,283 @@ def test_agent_to_dict(app):
         assert agent_dict['status'] == 'active'
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+def test_audit_timeline_empty(client, auth_headers):
+    """Test audit timeline endpoint when no events exist."""
+    response = client.get('/api/audit/timeline', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['timeline'] == []
+    assert data['count'] == 0
+
+
+def test_audit_timeline_with_events(app, client, auth_headers):
+    """Test audit timeline endpoint with events."""
+    with app.app_context():
+        # Create audit events
+        event1 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{"width": 640, "height": 480}',
+            output='{"frame_id": "frame-1"}'
+        )
+        event2 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-002',
+            tool_name='record_audio',
+            status='failure',
+            severity='medium',
+            input_args='{"duration": 5}',
+            output='{"error": "no device"}'
+        )
+        db.session.add(event1)
+        db.session.add(event2)
+        db.session.commit()
+    
+    response = client.get('/api/audit/timeline?limit=10', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['count'] == 2
+    assert data['timeline'][0]['agent_id'] == 'agent-001'
+    assert data['timeline'][0]['tool'] == 'capture_frame'
+
+
+def test_audit_timeline_filter_by_agent(app, client, auth_headers):
+    """Test audit timeline filtering by agent."""
+    with app.app_context():
+        event1 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        event2 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-002',
+            tool_name='record_audio',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add(event1)
+        db.session.add(event2)
+        db.session.commit()
+    
+    response = client.get('/api/audit/timeline?agent_id=agent-001', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['count'] == 1
+    assert data['timeline'][0]['agent_id'] == 'agent-001'
+
+
+def test_audit_timeline_filter_by_tool(app, client, auth_headers):
+    """Test audit timeline filtering by tool."""
+    with app.app_context():
+        event1 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        event2 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='record_audio',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add(event1)
+        db.session.add(event2)
+        db.session.commit()
+    
+    response = client.get('/api/audit/timeline?tool=capture_frame', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['count'] == 1
+    assert data['timeline'][0]['tool'] == 'capture_frame'
+
+
+def test_get_audit_event(app, client, auth_headers):
+    """Test getting a specific audit event."""
+    with app.app_context():
+        event = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{"width": 640}',
+            output='{"frame_id": "f1"}'
+        )
+        db.session.add(event)
+        db.session.commit()
+        event_id = event.id
+    
+    response = client.get(f'/api/audit/{event_id}', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['agent_id'] == 'agent-001'
+    assert data['tool_name'] == 'capture_frame'
+
+
+def test_get_audit_event_not_found(client, auth_headers):
+    """Test getting non-existent event."""
+    response = client.get('/api/audit/999', headers=auth_headers)
+    assert response.status_code == 404
+
+
+def test_replay_audit_event(app, client, auth_headers):
+    """Test replaying an audit event."""
+    with app.app_context():
+        event = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add(event)
+        db.session.commit()
+        event_id = event.id
+    
+    response = client.post(f'/api/audit/replay/{event_id}', 
+                          headers=auth_headers,
+                          json={})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['event_id'] == event_id
+    assert data['tool'] == 'capture_frame'
+    assert data['replay_mode'] == 'simulated'
+    assert data['status'] == 'success'
+
+
+def test_replay_audit_event_not_found(client, auth_headers):
+    """Test replaying non-existent event."""
+    response = client.post('/api/audit/replay/999',
+                          headers=auth_headers,
+                          json={})
+    assert response.status_code == 404
+
+
+def test_audit_stats(app, client, auth_headers):
+    """Test audit statistics endpoint."""
+    with app.app_context():
+        # Create various events
+        event1 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        event2 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='record_audio',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        event3 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-002',
+            tool_name='capture_frame',
+            status='failure',
+            severity='high',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add_all([event1, event2, event3])
+        db.session.commit()
+    
+    response = client.get('/api/audit/stats', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['total_events'] == 3
+    assert data['successful_events'] == 2
+    assert data['failed_events'] == 1
+    assert data['success_rate'] == pytest.approx(66.66, abs=0.1)
+    assert len(data['tool_usage']) > 0
+    assert len(data['agent_activity']) > 0
+
+
+def test_export_audit_trail_json(app, client, auth_headers):
+    """Test exporting audit trail as JSON."""
+    with app.app_context():
+        event = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add(event)
+        db.session.commit()
+    
+    response = client.get('/api/audit/export?format=json', headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'export_timestamp' in data
+    assert 'event_count' in data
+    assert data['event_count'] == 1
+    assert 'events' in data
+
+
+def test_export_audit_trail_filtered(app, client, auth_headers):
+    """Test exporting audit trail filtered by agent."""
+    with app.app_context():
+        event1 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-001',
+            tool_name='capture_frame',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        event2 = AuditEvent(
+            timestamp=datetime.utcnow(),
+            agent_id='agent-002',
+            tool_name='record_audio',
+            status='success',
+            severity='low',
+            input_args='{}',
+            output='{}'
+        )
+        db.session.add_all([event1, event2])
+        db.session.commit()
+    
+    response = client.get('/api/audit/export?format=json&agent_id=agent-001', 
+                         headers=auth_headers)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['event_count'] == 1
+    assert data['events'][0]['agent_id'] == 'agent-001'
+
+
+def test_export_audit_trail_unsupported_format(client, auth_headers):
+    """Test exporting with unsupported format."""
+    response = client.get('/api/audit/export?format=pdf', headers=auth_headers)
+    assert response.status_code == 400
+    data = response.get_json()
+    assert 'error' in data
+
+

@@ -63,6 +63,19 @@ function setupEventListeners() {
         loadAuditEvents();
     });
 
+    // Replay & Timeline controls
+    document.getElementById('replay-refresh')?.addEventListener('click', () => {
+        loadAuditTimeline();
+    });
+
+    document.getElementById('export-audit-json')?.addEventListener('click', () => {
+        exportAuditTrail('json');
+    });
+
+    document.getElementById('export-audit-pdf')?.addEventListener('click', () => {
+        exportAuditTrail('pdf');
+    });
+
     // Approval form
     approvalForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -93,6 +106,8 @@ function switchTab(tabName) {
     // Load data for specific tabs
     if (tabName === 'audit') {
         loadAuditEvents();
+    } else if (tabName === 'replay') {
+        loadAuditTimeline();
     }
 }
 
@@ -386,4 +401,339 @@ function setConnected(isConnected) {
 function updateTimestamp() {
     const now = new Date();
     timestampEl.textContent = now.toLocaleTimeString();
+}
+// ============================================================================
+// AUDIT REPLAY & TIMELINE FUNCTIONS
+// ============================================================================
+
+/**
+ * Load audit timeline with filtering options
+ */
+async function loadAuditTimeline() {
+    const agentFilter = document.getElementById('replay-filter-agent')?.value || '';
+    const toolFilter = document.getElementById('replay-filter-tool')?.value || '';
+    const statusFilter = document.getElementById('replay-filter-status')?.value || '';
+
+    try {
+        const params = new URLSearchParams();
+        params.append('limit', 100);
+        if (agentFilter) params.append('agent_id', agentFilter);
+        if (toolFilter) params.append('tool', toolFilter);
+        if (statusFilter) params.append('status', statusFilter);
+
+        const response = await fetch(`${API_BASE}/audit/timeline?${params}`, {
+            headers: AUTH_HEADER
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        renderAuditTimeline(data.timeline || []);
+        loadAuditStats();
+    } catch (error) {
+        console.error('Failed to load audit timeline:', error);
+        document.getElementById('audit-timeline').innerHTML =
+            '<div style="color: var(--error-color);">Failed to load timeline</div>';
+    }
+}
+
+/**
+ * Render audit timeline with interactive events
+ */
+function renderAuditTimeline(events) {
+    const container = document.getElementById('audit-timeline');
+
+    if (!events || events.length === 0) {
+        container.innerHTML = '<div class="empty">No events match the filters</div>';
+        return;
+    }
+
+    container.innerHTML = events.map((event, idx) => `
+        <div class="timeline-event ${event.status}" data-event-id="${event.id}">
+            <div class="timeline-marker">
+                <div class="timeline-dot"></div>
+                ${idx < events.length - 1 ? '<div class="timeline-line"></div>' : ''}
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-header">
+                    <span class="timeline-tool">${event.tool}</span>
+                    <span class="timeline-timestamp">${new Date(event.timestamp).toLocaleString()}</span>
+                </div>
+                <div>
+                    <span class="timeline-agent">${event.agent_id}</span>
+                    <span style="margin-left: 0.5rem; font-size: 0.85rem;">
+                        Status: <strong>${event.status === 'success' ? '✓' : '✗'} ${event.status}</strong>
+                    </span>
+                </div>
+                <div class="timeline-details">
+                    <div class="timeline-detail">
+                        <span class="timeline-label">Severity:</span>
+                        <span class="timeline-value">${event.severity || 'normal'}</span>
+                    </div>
+                    <div class="timeline-detail">
+                        <span class="timeline-label">Duration:</span>
+                        <span class="timeline-value">-</span>
+                    </div>
+                </div>
+                <div class="timeline-actions">
+                    <button class="btn-small" onclick="viewEventDetails(${event.id})">Details</button>
+                    <button class="btn-small" onclick="replayEvent(${event.id})">Replay</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click handlers for timeline events
+    document.querySelectorAll('.timeline-event').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (!e.target.closest('button')) {
+                viewEventDetails(parseInt(el.dataset.eventId));
+            }
+        });
+    });
+}
+
+/**
+ * Load and display audit statistics
+ */
+async function loadAuditStats() {
+    try {
+        const response = await fetch(`${API_BASE}/audit/stats`, {
+            headers: AUTH_HEADER
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const stats = await response.json();
+        renderAuditStats(stats);
+    } catch (error) {
+        console.error('Failed to load audit stats:', error);
+    }
+}
+
+/**
+ * Render audit statistics dashboard
+ */
+function renderAuditStats(stats) {
+    const container = document.getElementById('audit-stats');
+
+    const toolUsageHTML = stats.tool_usage
+        .slice(0, 5)
+        .map(
+            (item) => `
+        <div class="tool-usage-item">
+            <span class="tool-usage-name">${item.tool}</span>
+            <span class="tool-usage-count">${item.count} calls</span>
+        </div>
+    `
+        )
+        .join('');
+
+    const agentActivityHTML = stats.agent_activity
+        .slice(0, 5)
+        .map(
+            (item) => `
+        <div class="tool-usage-item">
+            <span class="tool-usage-name">${item.agent}</span>
+            <span class="tool-usage-count">${item.count} actions</span>
+        </div>
+    `
+        )
+        .join('');
+
+    container.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-label">Total Events</div>
+            <div class="stat-value">${stats.total_events}</div>
+            <div class="stat-subtext">${stats.successful_events} successful, ${stats.failed_events} failed</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Success Rate</div>
+            <div class="stat-value">${stats.success_rate.toFixed(1)}%</div>
+            <div class="stat-subtext">${stats.successful_events}/${stats.total_events}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Top Tools</div>
+            <div class="tool-usage-list">
+                ${toolUsageHTML}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Top Agents</div>
+            <div class="tool-usage-list">
+                ${agentActivityHTML}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * View detailed event information
+ */
+async function viewEventDetails(eventId) {
+    try {
+        const response = await fetch(`${API_BASE}/audit/${eventId}`, {
+            headers: AUTH_HEADER
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const event = await response.json();
+
+        // Create modal for details
+        const modal = document.createElement('div');
+        modal.className = 'event-detail-modal active';
+        modal.innerHTML = `
+            <div class="event-detail-content">
+                <button class="event-detail-close" onclick="this.closest('.event-detail-modal').remove()">×</button>
+                <div class="event-detail-header">
+                    <div class="event-detail-title">${event.tool_name}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        ${new Date(event.timestamp).toLocaleString()}
+                    </div>
+                </div>
+                <div class="event-detail-body">
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Agent ID</div>
+                        <div class="event-detail-value">${event.agent_id}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Status</div>
+                        <div class="event-detail-value">
+                            ${event.status === 'success' ? '✓ Success' : '✗ Failed'}
+                        </div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Input Arguments</div>
+                        <div class="event-detail-value">${event.input_args ? JSON.stringify(JSON.parse(event.input_args), null, 2) : 'None'}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Output</div>
+                        <div class="event-detail-value">${event.output ? JSON.stringify(JSON.parse(event.output), null, 2) : 'None'}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <button class="btn-primary" onclick="replayEvent(${event.id})">Replay in Simulation</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    } catch (error) {
+        console.error('Failed to load event details:', error);
+        alert('Failed to load event details');
+    }
+}
+
+/**
+ * Replay an audit event in simulation mode
+ */
+async function replayEvent(eventId) {
+    try {
+        const response = await fetch(`${API_BASE}/audit/replay/${eventId}`, {
+            method: 'POST',
+            headers: AUTH_HEADER,
+            body: JSON.stringify({})
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Show replay result
+        const modal = document.createElement('div');
+        modal.className = 'event-detail-modal active';
+        modal.innerHTML = `
+            <div class="event-detail-content">
+                <button class="event-detail-close" onclick="this.closest('.event-detail-modal').remove()">×</button>
+                <div class="event-detail-header">
+                    <div class="event-detail-title">Event Replayed ✓</div>
+                </div>
+                <div class="event-detail-body">
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Replayed At</div>
+                        <div class="event-detail-value">${new Date(result.replayed_at).toLocaleString()}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Mode</div>
+                        <div class="event-detail-value">🔄 ${result.replay_mode}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Status</div>
+                        <div class="event-detail-value">${result.status}</div>
+                    </div>
+                    <div class="event-detail-section">
+                        <div class="event-detail-label">Message</div>
+                        <div class="event-detail-value">${result.message}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    } catch (error) {
+        console.error('Failed to replay event:', error);
+        alert('Failed to replay event');
+    }
+}
+
+/**
+ * Export audit trail
+ */
+async function exportAuditTrail(format) {
+    try {
+        const agentId = document.getElementById('replay-filter-agent')?.value;
+
+        const params = new URLSearchParams();
+        params.append('format', format);
+        if (agentId) params.append('agent_id', agentId);
+
+        const response = await fetch(`${API_BASE}/audit/export?${params}`, {
+            headers: AUTH_HEADER
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        if (format === 'json') {
+            const data = await response.json();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            downloadFile(blob, `audit-export-${new Date().toISOString().split('T')[0]}.json`);
+        }
+    } catch (error) {
+        console.error('Failed to export audit trail:', error);
+        alert('Failed to export audit trail');
+    }
+}
+
+/**
+ * Download file utility
+ */
+function downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }

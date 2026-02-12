@@ -162,7 +162,10 @@ class AuditEvent(db.Model):
     agent_id = db.Column(db.String(64), db.ForeignKey("agents.id"), index=True)
     tool_name = db.Column(db.String(64), index=True)
     status = db.Column(db.String(32), index=True)  # success, error, pending
-    details = db.Column(db.JSON, default={})
+    severity = db.Column(db.String(32), default="normal")  # low, normal, high, critical
+    input_args = db.Column(db.JSON, default={})  # JSON-serialized input arguments
+    output = db.Column(db.JSON, default={})  # JSON-serialized output/result
+    details = db.Column(db.JSON, default={})  # Additional metadata
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to JSON."""
@@ -172,6 +175,9 @@ class AuditEvent(db.Model):
             "agent_id": self.agent_id,
             "tool_name": self.tool_name,
             "status": self.status,
+            "severity": self.severity,
+            "input_args": json.dumps(self.input_args) if isinstance(self.input_args, dict) else self.input_args,
+            "output": json.dumps(self.output) if isinstance(self.output, dict) else self.output,
             "details": self.details or {},
         }
 
@@ -187,8 +193,12 @@ class AuditEvent(db.Model):
             agent_id=event.get("agent_id"),
             tool_name=event.get("tool"),
             status=event.get("status", "unknown"),
+            severity=event.get("severity", "normal"),
+            input_args=event.get("input_args", {}),
+            output=event.get("output", {}),
             details=event,
         )
+
 
 
 def init_db(app) -> None:

@@ -44,6 +44,9 @@
                     <button class="tab-button" data-tab="audit">
                         📋 Audit Log
                     </button>
+                    <button class="tab-button" data-tab="replay">
+                        🔄 Replay & Timeline
+                    </button>
                     <button class="tab-button" data-tab="approve">
                         ✅ Approval Console
                     </button>
@@ -91,6 +94,50 @@
                             </div>
                             <div id="audit-stream" class="audit-stream">
                                 <p class="empty">Loading audit log...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Replay & Timeline Tab -->
+                    <div id="replay-tab" class="tab-pane">
+                        <div class="card">
+                            <h3>Audit Timeline & Replay</h3>
+                            <div class="replay-controls">
+                                <input
+                                    type="text"
+                                    id="replay-filter-agent"
+                                    placeholder="Filter by agent..."
+                                    class="input-field"
+                                >
+                                <input
+                                    type="text"
+                                    id="replay-filter-tool"
+                                    placeholder="Filter by tool..."
+                                    class="input-field"
+                                >
+                                <select id="replay-filter-status" class="input-field">
+                                    <option value="">All Status</option>
+                                    <option value="success">Success</option>
+                                    <option value="failure">Failure</option>
+                                </select>
+                                <button id="replay-refresh" class="btn-primary">Load Timeline</button>
+                            </div>
+                            <div id="audit-timeline" class="audit-timeline">
+                                <p class="empty">No events loaded</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Audit Statistics</h3>
+                            <div id="audit-stats" class="audit-stats">
+                                <p class="empty">Loading statistics...</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="audit-controls">
+                                <button id="export-audit-json" class="btn-primary">Export as JSON</button>
+                                <button id="export-audit-pdf" class="btn-primary">Export as PDF</button>
                             </div>
                         </div>
                     </div>

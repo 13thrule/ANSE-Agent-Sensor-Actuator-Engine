@@ -175,6 +175,159 @@ def create_app(config=None):
 
         return jsonify({"status": "revoked"}), 200
 
+    # Audit & Replay API endpoints
+    @app.route("/api/audit/timeline", methods=["GET"])
+    @require_auth
+    def audit_timeline():
+        """Get audit events for timeline visualization."""
+        limit = request.args.get("limit", 100, type=int)
+        agent_id = request.args.get("agent_id", None, type=str)
+        tool_name = request.args.get("tool", None, type=str)
+        severity = request.args.get("severity", None, type=str)
+        status = request.args.get("status", None, type=str)
+
+        query = AuditEvent.query.order_by(AuditEvent.timestamp.asc())
+
+        # Apply filters
+        if agent_id:
+            query = query.filter_by(agent_id=agent_id)
+        if tool_name:
+            query = query.filter_by(tool_name=tool_name)
+        if severity:
+            query = query.filter_by(severity=severity)
+        if status:
+            query = query.filter_by(status=status)
+
+        events = query.limit(limit).all()
+
+        # Convert to timeline format
+        timeline = [
+            {
+                "id": e.id,
+                "timestamp": e.timestamp.isoformat(),
+                "agent_id": e.agent_id,
+                "tool": e.tool_name,
+                "status": e.status,
+                "severity": e.severity,
+                "input_args": e.input_args,
+                "output": e.output,
+            }
+            for e in events
+        ]
+
+        return jsonify({"timeline": timeline, "count": len(timeline)}), 200
+
+    @app.route("/api/audit/<int:event_id>", methods=["GET"])
+    @require_auth
+    def get_audit_event(event_id):
+        """Get detailed audit event."""
+        event = AuditEvent.query.filter_by(id=event_id).first()
+        if not event:
+            return jsonify({"error": "Event not found"}), 404
+
+        return jsonify(event.to_dict()), 200
+
+    @app.route("/api/audit/replay/<int:event_id>", methods=["POST"])
+    @require_auth
+    def replay_audit_event(event_id):
+        """Replay a tool call in simulation mode."""
+        event = AuditEvent.query.filter_by(id=event_id).first()
+        if not event:
+            return jsonify({"error": "Event not found"}), 404
+
+        # For now, return a placeholder result indicating replay mode
+        # In production, this would re-execute the tool call with ANSE_SIMULATE=1
+        replay_result = {
+            "event_id": event.id,
+            "replayed_at": datetime.utcnow().isoformat(),
+            "tool": event.tool_name,
+            "agent_id": event.agent_id,
+            "original_input": event.input_args,
+            "original_output": event.output,
+            "replay_mode": "simulated",
+            "status": "success",
+            "message": "Event replayed in simulation mode (deterministic)",
+        }
+
+        return jsonify(replay_result), 200
+
+    @app.route("/api/audit/stats", methods=["GET"])
+    @require_auth
+    def audit_stats():
+        """Get audit statistics and summary."""
+        # Get summary stats
+        total_events = AuditEvent.query.count()
+        successful_events = AuditEvent.query.filter_by(status="success").count()
+        failed_events = AuditEvent.query.filter_by(status="failure").count()
+
+        # Get tool usage distribution
+        from sqlalchemy import func
+
+        tool_usage = (
+            db.session.query(
+                AuditEvent.tool_name, func.count(AuditEvent.id).label("count")
+            )
+            .group_by(AuditEvent.tool_name)
+            .all()
+        )
+
+        # Get agent activity
+        agent_activity = (
+            db.session.query(
+                AuditEvent.agent_id, func.count(AuditEvent.id).label("count")
+            )
+            .group_by(AuditEvent.agent_id)
+            .all()
+        )
+
+        return (
+            jsonify(
+                {
+                    "total_events": total_events,
+                    "successful_events": successful_events,
+                    "failed_events": failed_events,
+                    "success_rate": (
+                        (successful_events / total_events * 100)
+                        if total_events > 0
+                        else 0
+                    ),
+                    "tool_usage": [
+                        {"tool": tool, "count": count} for tool, count in tool_usage
+                    ],
+                    "agent_activity": [
+                        {"agent": agent, "count": count}
+                        for agent, count in agent_activity
+                    ],
+                }
+            ),
+            200,
+        )
+
+    @app.route("/api/audit/export", methods=["GET"])
+    @require_auth
+    def export_audit_trail():
+        """Export audit trail as JSON for compliance."""
+        format_type = request.args.get("format", "json", type=str)
+        agent_id = request.args.get("agent_id", None, type=str)
+
+        query = AuditEvent.query.order_by(AuditEvent.timestamp.asc())
+
+        if agent_id:
+            query = query.filter_by(agent_id=agent_id)
+
+        events = query.all()
+
+        if format_type == "json":
+            audit_data = {
+                "export_timestamp": datetime.utcnow().isoformat(),
+                "agent_id": agent_id or "all_agents",
+                "event_count": len(events),
+                "events": [e.to_dict() for e in events],
+            }
+            return jsonify(audit_data), 200
+        else:
+            return jsonify({"error": "Unsupported format"}), 400
+
     @app.errorhandler(404)
     def not_found(error):
         """Handle 404."""
