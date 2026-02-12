@@ -4,6 +4,7 @@ Initializes all subsystems and starts the agent bridge.
 """
 import asyncio
 import logging
+import os
 from typing import Optional
 
 from anse.tool_registry import ToolRegistry
@@ -18,6 +19,18 @@ from anse.tools.video import capture_frame, list_cameras
 from anse.tools.audio import record_audio, list_audio_devices
 from anse.tools.tts import say, get_voices
 
+# Import simulated tools (conditional loading)
+try:
+    from anse.tools.simulated import (
+        simulate_camera,
+        simulate_microphone,
+        list_cameras_sim,
+        list_audio_devices_sim
+    )
+    SIMULATED_TOOLS_AVAILABLE = True
+except ImportError:
+    SIMULATED_TOOLS_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -30,14 +43,23 @@ class EngineCore:
     Main ANSE engine that coordinates all subsystems.
     """
 
-    def __init__(self, policy_path: Optional[str] = None):
+    def __init__(self, policy_path: Optional[str] = None, simulate: Optional[bool] = None):
         """
         Initialize the engine with all subsystems.
         
         Args:
             policy_path: Path to safety policy YAML file
+            simulate: Force simulation mode. If None, checks ANSE_SIMULATE env var.
         """
         logger.info("Initializing ANSE Engine Core")
+        
+        # Determine sim mode
+        if simulate is None:
+            simulate = os.getenv("ANSE_SIMULATE", "").lower() in ("1", "true", "yes")
+        
+        self.simulate = simulate
+        if self.simulate:
+            logger.info("✓ Running in SIMULATED mode (hardware-free)")
         
         # Initialize health monitor
         self.health = initialize_health_monitor()
@@ -61,59 +83,112 @@ class EngineCore:
         """Register all built-in tools with the registry."""
         logger.info("Registering built-in tools")
         
-        # Video tools
-        self.tools.register(
-            name="capture_frame",
-            func=capture_frame,
-            schema={
-                "type": "object",
-                "properties": {
-                    "camera_id": {"type": "integer", "default": 0},
-                    "out_dir": {"type": "string", "default": "/tmp/anse"}
-                }
-            },
-            description="Capture an RGB frame from camera",
-            sensitivity="medium",
-            cost_hint={"latency_ms": 200, "expensive": False}
-        )
+        if self.simulate and SIMULATED_TOOLS_AVAILABLE:
+            # Register simulated tools
+            self.tools.register(
+                name="capture_frame",
+                func=simulate_camera,
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "camera_id": {"type": "integer", "default": 0},
+                        "width": {"type": "integer", "default": 640},
+                        "height": {"type": "integer", "default": 480},
+                        "seed": {"type": "integer"}
+                    }
+                },
+                description="[SIMULATED] Capture deterministic frame from virtual camera",
+                sensitivity="medium",
+                cost_hint={"latency_ms": 50, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="list_cameras",
+                func=list_cameras_sim,
+                schema={"type": "object", "properties": {}},
+                description="[SIMULATED] List virtual camera devices",
+                sensitivity="low",
+                cost_hint={"latency_ms": 10, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="record_audio",
+                func=simulate_microphone,
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "duration_sec": {"type": "number", "default": 2.0, "minimum": 0.1, "maximum": 60},
+                        "samplerate": {"type": "integer", "default": 16000},
+                        "channels": {"type": "integer", "default": 1},
+                        "seed": {"type": "integer"}
+                    }
+                },
+                description="[SIMULATED] Record deterministic audio from virtual microphone",
+                sensitivity="medium",
+                cost_hint={"latency_ms": 100, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="list_audio_devices",
+                func=list_audio_devices_sim,
+                schema={"type": "object", "properties": {}},
+                description="[SIMULATED] List virtual audio devices",
+                sensitivity="low",
+                cost_hint={"latency_ms": 10, "expensive": False}
+            )
+        else:
+            # Register real tools
+            self.tools.register(
+                name="capture_frame",
+                func=capture_frame,
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "camera_id": {"type": "integer", "default": 0},
+                        "out_dir": {"type": "string", "default": "/tmp/anse"}
+                    }
+                },
+                description="Capture an RGB frame from camera",
+                sensitivity="medium",
+                cost_hint={"latency_ms": 200, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="list_cameras",
+                func=list_cameras,
+                schema={"type": "object", "properties": {}},
+                description="List available camera devices",
+                sensitivity="low",
+                cost_hint={"latency_ms": 100, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="record_audio",
+                func=record_audio,
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "duration": {"type": "number", "default": 2.0, "minimum": 0.1, "maximum": 60},
+                        "samplerate": {"type": "integer", "default": 16000},
+                        "channels": {"type": "integer", "default": 1},
+                        "out_dir": {"type": "string", "default": "/tmp/anse"}
+                    }
+                },
+                description="Record audio from microphone",
+                sensitivity="medium",
+                cost_hint={"latency_ms": 2000, "expensive": False}
+            )
+            
+            self.tools.register(
+                name="list_audio_devices",
+                func=list_audio_devices,
+                schema={"type": "object", "properties": {}},
+                description="List available audio input devices",
+                sensitivity="low",
+                cost_hint={"latency_ms": 50, "expensive": False}
+            )
         
-        self.tools.register(
-            name="list_cameras",
-            func=list_cameras,
-            schema={"type": "object", "properties": {}},
-            description="List available camera devices",
-            sensitivity="low",
-            cost_hint={"latency_ms": 100, "expensive": False}
-        )
-        
-        # Audio tools
-        self.tools.register(
-            name="record_audio",
-            func=record_audio,
-            schema={
-                "type": "object",
-                "properties": {
-                    "duration": {"type": "number", "default": 2.0, "minimum": 0.1, "maximum": 60},
-                    "samplerate": {"type": "integer", "default": 16000},
-                    "channels": {"type": "integer", "default": 1},
-                    "out_dir": {"type": "string", "default": "/tmp/anse"}
-                }
-            },
-            description="Record audio from microphone",
-            sensitivity="medium",
-            cost_hint={"latency_ms": 2000, "expensive": False}
-        )
-        
-        self.tools.register(
-            name="list_audio_devices",
-            func=list_audio_devices,
-            schema={"type": "object", "properties": {}},
-            description="List available audio input devices",
-            sensitivity="low",
-            cost_hint={"latency_ms": 50, "expensive": False}
-        )
-        
-        # TTS tools
+        # TTS tools (same for both modes)
         self.tools.register(
             name="say",
             func=say,

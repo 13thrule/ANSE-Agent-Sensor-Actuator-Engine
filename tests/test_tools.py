@@ -9,6 +9,18 @@ from anse.tools.video import capture_frame, list_cameras
 from anse.tools.audio import record_audio, list_audio_devices
 from anse.tools.tts import say, get_voices
 
+# Import simulated tools
+try:
+    from anse.tools.simulated import (
+        simulate_camera,
+        simulate_microphone,
+        list_cameras_sim,
+        list_audio_devices_sim
+    )
+    SIMULATED_AVAILABLE = True
+except ImportError:
+    SIMULATED_AVAILABLE = False
+
 
 def test_list_cameras():
     """Test camera listing (may return empty if no cameras)."""
@@ -141,3 +153,133 @@ def test_tool_registry_integration():
     
     # Should either succeed or fail gracefully
     assert isinstance(result, dict)
+
+
+# Simulated tool tests
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_camera():
+    """Test simulated camera with deterministic output."""
+    async def _test():
+        result1 = await simulate_camera(seed=42)
+        result2 = await simulate_camera(seed=42)
+        
+        assert result1["status"] == "success"
+        assert result2["status"] == "success"
+        assert result1["format"] == "jpeg"
+        # Same seed should produce same output
+        assert result1["frame_id"] == result2["frame_id"]
+        assert result1["frame_bytes"] == result2["frame_bytes"]
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_camera_different_seeds():
+    """Test simulated camera with different seeds produces different output."""
+    async def _test():
+        result1 = await simulate_camera(seed=1)
+        result2 = await simulate_camera(seed=2)
+        
+        assert result1["status"] == "success"
+        assert result2["status"] == "success"
+        # Different seeds should produce different output
+        assert result1["frame_id"] != result2["frame_id"]
+        assert result1["frame_bytes"] != result2["frame_bytes"]
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_camera_dimensions():
+    """Test simulated camera respects dimensions."""
+    async def _test():
+        result = await simulate_camera(width=320, height=240, seed=0)
+        
+        assert result["status"] == "success"
+        assert result["width"] == 320
+        assert result["height"] == 240
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_microphone():
+    """Test simulated microphone with deterministic output."""
+    async def _test():
+        result1 = await simulate_microphone(duration_sec=1.0, seed=42)
+        result2 = await simulate_microphone(duration_sec=1.0, seed=42)
+        
+        assert result1["status"] == "success"
+        assert result2["status"] == "success"
+        assert result1["format"] == "wav"
+        # Same seed should produce same output
+        assert result1["audio_id"] == result2["audio_id"]
+        assert result1["audio_bytes"] == result2["audio_bytes"]
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_microphone_duration():
+    """Test simulated microphone respects duration."""
+    async def _test():
+        result = await simulate_microphone(duration_sec=2.5, seed=0)
+        
+        assert result["status"] == "success"
+        assert result["duration_sec"] == 2.5
+        assert result["samplerate"] == 16000
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_microphone_too_short():
+    """Test simulated microphone rejects too short duration."""
+    async def _test():
+        result = await simulate_microphone(duration_sec=0.05)
+        
+        assert result["status"] == "error"
+        assert "too_short" in result["error"]
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_simulate_microphone_too_long():
+    """Test simulated microphone rejects too long duration."""
+    async def _test():
+        result = await simulate_microphone(duration_sec=120)
+        
+        assert result["status"] == "error"
+        assert "too_long" in result["error"]
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_list_cameras_sim():
+    """Test simulated camera listing."""
+    async def _test():
+        result = await list_cameras_sim()
+        
+        assert result["status"] == "success"
+        assert "cameras" in result
+        assert len(result["cameras"]) > 0
+        assert result["cameras"][0]["simulated"] is True
+    
+    asyncio.run(_test())
+
+
+@pytest.mark.skipif(not SIMULATED_AVAILABLE, reason="Simulated tools not available")
+def test_list_audio_devices_sim():
+    """Test simulated audio device listing."""
+    async def _test():
+        result = await list_audio_devices_sim()
+        
+        assert result["status"] == "success"
+        assert "input_devices" in result
+        assert "output_devices" in result
+        assert len(result["input_devices"]) > 0
+        assert result["input_devices"][0]["simulated"] is True
+    
+    asyncio.run(_test())
