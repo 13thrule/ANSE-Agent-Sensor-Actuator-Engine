@@ -66,11 +66,7 @@ NEXT STEPS (Optional)
    - Release name: "Initial Release - Production Ready"
    - Description: Copy from README or CLEANED_STRUCTURE.txt
 
-3. Enable GitHub Actions (optional):
-   - Create .github/workflows/tests.yml
-   - Auto-run pytest on push
-
-4. Set up GitHub Pages (optional):
+3. Set up GitHub Pages (optional):
    - Enable in Settings → Pages
    - Serve docs/ as documentation site
 

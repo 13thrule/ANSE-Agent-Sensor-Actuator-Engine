@@ -11,11 +11,10 @@
 - **Step 2:** Operator UI & Approval Console (33 tests) ✓
 - **Step 3:** Simulated Sensor Suite (8 tests) ✓
 
-### ✅ Phase 2: Complete (All 4 Steps)
+### ✅ Phase 2: Complete (All 3 Steps)
 - **Step 1:** Multiagent Isolation & Quotas ✓
-- **Step 2:** CI/CD Infrastructure (GitHub Actions) ✓
-- **Step 3:** LLM Production Adapter Template ✓
-- **Step 4:** Operator Audit UI & Replay Viewer (12 tests) ✓
+- **Step 2:** LLM Production Adapter Template ✓
+- **Step 3:** Operator Audit UI & Replay Viewer (12 tests) ✓
 
 ### 🔄 Phase 3: In Progress
 - **Step 1:** Network Tools (http_get, ping, dns_lookup) - 17 tests ✓
@@ -46,7 +45,6 @@ This document outlines the prioritized feature roadmap, implementation timeline,
 | **LLM Function-Calling (Prod)** | High | Medium (1–2 wks) | Medium | **P2** | Weeks 3–5 |
 | **Multiagent Isolation & Quotas** | High | Medium (3–5 wks) | Medium | **P2** | Weeks 4–8 |
 | **Operator Audit UI & Replay** | Medium | Medium (2–3 wks) | Low | **P2** | Weeks 4–6 |
-| **CI/CD & Release Artifacts** | Medium | Low–Medium (1–2 wks) | Low | **P2** | Parallel |
 | **Additional Tools** (browser, SDR, robot) | Medium | Variable | Medium | **P3** | Post-P1 |
 | **Benchmark Suite & Sim→Real Tests** | Medium | Medium (2–4 wks) | Medium | **P3** | Post-P1 |
 
@@ -101,15 +99,6 @@ This document outlines the prioritized feature roadmap, implementation timeline,
   - Namespaced world model views.
   - Prevent one agent from starving others.
 - **Risk:** Medium (concurrency, accounting accuracy).
-
-#### **CI/CD & Release Artifacts**
-- **Why:** Reproducible builds, contributor confidence, distribution.
-- **Includes:**
-  - GitHub Actions: test on Python 3.11+, Windows/macOS/Linux.
-  - Publish releases to PyPI.
-  - Docker image with hardware passthrough.
-  - Pre-built binaries (optional).
-- **Risk:** Low.
 
 #### **Operator Audit UI & Replay Viewer**
 - **Why:** Makes audit logs actionable and validates compliance.
@@ -538,7 +527,7 @@ After quotas and multiagent isolation are stable, add:
 ### **Week 4–8**
 - Multiagent quotas and isolation.
 - Audit UI and replay viewer.
-- CI/CD: GitHub Actions, PyPI release.
+- PyPI package release.
 
 ---
 
@@ -552,7 +541,6 @@ After quotas and multiagent isolation are stable, add:
 ### **After Phase 2 (Week 8)**
 - ✅ LLM adapter allows autonomous agents with real models (OpenAI, Claude).
 - ✅ Multiagent isolation prevents resource starvation; quotas enforced.
-- ✅ GitHub Actions CI passes on all platforms (Windows, macOS, Linux).
 - ✅ PyPI package published; `pip install anse` works.
 
 ### **After Phase 3 (Week 12+)**
