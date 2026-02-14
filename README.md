@@ -36,22 +36,33 @@ ANSE is a local runtime engine for building autonomous agents with sensor access
 
 ## What Is ANSE?
 
-ANSE is an open-source **local agent engine** providing:
+ANSE is an open-source **nervous system engine** — the body for your agent brain. It's a local runtime that implements real-time sensor → world model → reflex → actuator loops, streamed over WebSocket for external agents to connect and control.
 
-- **📸 Camera tools** — capture frames, analyze edges/corners/colors
-- **🎤 Audio tools** — record audio, analyze frequencies and amplitude
-- **🔊 TTS tools** — text-to-speech with multiple voices
-- **🔌 Plugin system** — add custom sensors via YAML or Python
-- **🔒 Safety** — rate limiting, permission scopes, audit logging
-- **♻️ Simulation mode** — deterministic offline testing without hardware
-- **🎛️ Operator UI** — web dashboard for monitoring + approvals
-- **📝 Audit trail** — immutable event logs with SHA256 hashing
+**The Core Idea:**
+- ANSE is the **body** (sensors, reflexes, actuators, world model)
+- Your agent is the **brain** (LLM, controller, decision logic)
+- They talk over WebSocket (ws://localhost:8001)
+- The dashboard is just a visualizer
+
+**What ANSE Provides:**
+
+- **🧠 Nervous System** — Real-time sensor → world model → reflex → actuator loops
+- **📡 WebSocket Backend** — Interface for agents to read sensors and send commands
+- **📸 Sensor Tools** — Camera, audio, TTS, and custom sensors
+- **⚡ Reflexes** — Hardcoded safety rules that respond instantly (no agent latency)
+- **🎬 Actuators** — Motor control, state management, action execution
+- **🌍 World Model** — Complete observable state, updated in real-time
+- **🔒 Safety** — Rate limiting, permission scopes, audit logging
+- **♻️ Simulation Mode** — Deterministic testing without hardware
+- **📊 Dashboard** — Real-time visualization (included, optional)
+- **📝 Audit Trail** — Immutable logs with SHA256 hashing
 
 **Build with ANSE if you need:**
-- Agents that capture real sensor data and respond autonomously
-- Consistent APIs for testing with simulated sensors and deploying with real hardware
+- A decoupled body/brain architecture for autonomous systems
+- Agents that read real sensors and control real actuators
+- Reflexes that respond instantly (bypassing agent latency)
+- Consistent APIs for testing with simulation, deploying with real hardware
 - On-device autonomous systems without cloud dependencies
-- Tool discovery and autonomous tool use
 - Complete audit trails and reproducibility
 
 ---
@@ -177,6 +188,101 @@ All 5 phases complete in ~150ms, fully event-driven, zero polling.
 
 ---
 
+## 🧠 How External Agents Connect (The Whole Point)
+
+Here's the key: **ANSE is the body, your agent is the brain.**
+
+The dashboard is cool for visualizing what's happening, but it's not the agent. The real power is that **any external process** can connect to the WebSocket backend and control the system:
+
+- A local LLM agent (with your favorite model)
+- A robotics controller running on another machine
+- A Python script that reads sensors and plans actions
+- A Docker container with your custom AI logic
+- Anything that can speak WebSocket
+
+### Agent Interface (ws://localhost:8001)
+
+When your agent connects, it gets:
+
+**Incoming Events (Agent reads):**
+```json
+// 1. Sensor events
+{
+  "type": "sensor",
+  "data": { "sensor_name": "distance", "value": 42.5 }
+}
+
+// 2. World model updates (the "brain state")
+{
+  "type": "worldmodel",
+  "data": { 
+    "distance_cm": 42.5, 
+    "safe": true, 
+    "last_reflex": "clear_to_move" 
+  }
+}
+
+// 3. Reflex triggers
+{
+  "type": "reflex",
+  "data": { "reflex_name": "proximity_safeguard", "triggered": true }
+}
+```
+
+**Outgoing Commands (Agent sends):**
+```json
+{
+  "action": "execute_actuator",
+  "data": { 
+    "actuator_name": "movement", 
+    "state": "MOVE" 
+  }
+}
+```
+
+### Example Agent Script
+
+```python
+import asyncio
+import json
+import websockets
+
+async def my_agent():
+    uri = "ws://localhost:8001"
+    async with websockets.connect(uri) as websocket:
+        # Listen to sensor events and world model
+        async for message in websocket:
+            event = json.loads(message)
+            
+            # Agent logic: read sensor → decide → act
+            if event["type"] == "sensor":
+                distance = event["data"]["value"]
+                
+                # If too close, tell the body to stop
+                if distance < 10:
+                    command = {
+                        "action": "execute_actuator", 
+                        "name": "movement", 
+                        "state": "STOP"
+                    }
+                    await websocket.send(json.dumps(command))
+
+asyncio.run(my_agent())
+```
+
+That's it. Your agent reads what the body senses, makes decisions, and tells the body what to do.
+
+### Why This Matters
+
+- **Decoupled architecture** — Agent and engine are independent processes
+- **Flexible** — Agents can live anywhere (local, remote, containerized)
+- **Real sensor data** — No simulation/abstraction mismatch
+- **Reflexes stay fast** — Hardcoded reflexes respond instantly; agents just influence them
+- **Observable** — Dashboard shows everything the agent sees
+- **Easy to test** — Swap real sensors for simulated ones, same agent code works
+
+---
+
 ## 🔍 What's Working vs. What's In Progress
 
 **✅ Fully Functional & Stable:**
@@ -287,9 +393,16 @@ ANSE has six comprehensive event-driven architecture guides. **Here's when to us
    - Event flow, world model, reflexes, agents
    - Core principles and patterns
 
+### 🧠 **Building Your Agent Brain?**
+- **[How Agents Connect](#-how-external-agents-connect-the-whole-point)** — See the agent integration section above
+  - WebSocket connection to the backend
+  - Event types agents receive (sensor, world model, reflex)
+  - How agents send actuator commands
+  - Python/Node/any-language agent example
+- **[Backend API](backend/README.md)** — WebSocket endpoint spec and deployment
+
 ### 🎨 **Want to See It In Action?**
 - **[Dashboard Guide](SCREENSHOTS.md)** — Visual walkthrough with screenshots
-- **[Backend API](backend/README.md)** — WebSocket backend configuration and deployment
 - **[Architecture Refactoring](BACKEND_REFACTORING_COMPLETE.md)** — How we separated backend/dashboard/demo
 
 ### 🔧 **Building Something?**
@@ -330,7 +443,7 @@ ANSE has six comprehensive event-driven architecture guides. **Here's when to us
 |--------|---------|
 | **[anse/](anse/)** | Core engine: world model, scheduler, tool registry, plugins |
 | **[plugins/](plugins/)** | Sensor, actuator, cognition, and system plugins organized by category |
-| **[backend/](backend/)** | WebSocket server for dashboard — pure event broadcaster |
+| **[backend/](backend/)** | WebSocket → agents, dashboard, and other clients (the integration point) |
 | **[dashboard/](dashboard/)** | Production web dashboard — real-time nervous system visualization |
 | **[examples/](examples/)** | Example implementations and tutorial code |
 | **[docs/](docs/)** | Complete documentation: guides, references, troubleshooting |
@@ -340,9 +453,10 @@ ANSE has six comprehensive event-driven architecture guides. **Here's when to us
 
 **Quick Navigation:**
 - 🚀 [Quick Start](#quick-start) — Get running in 30 seconds
+- 🧠 [How Agents Connect](#-how-external-agents-connect-the-whole-point) — Connect your agent brain
 - 📊 [Dashboard](QUICK_START.md) — Real-time event visualization
 - 📚 [Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md) — How ANSE works
-- 🔧 [Backend Setup](backend/README.md) — Production deployment
+- 🔧 [Backend Setup](backend/README.md) — WebSocket endpoint reference
 - 👀 [Screenshots Guide](SCREENSHOTS.md) — Visual walkthrough
 
 ---
