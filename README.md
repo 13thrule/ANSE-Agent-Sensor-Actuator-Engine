@@ -15,22 +15,27 @@ ANSE is a local runtime engine for building autonomous agents with sensor access
 
 ## 🔄 Project Status
 
-**ANSE is in active development** — the architecture is stable, but components are being reorganized for clarity.
+**ANSE v0.3 Beta** — Core engine and tools are stable and production-ready. Actively in development.
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **Core Engine** | ✅ Stable | Engine core, world model, scheduler, tool registry, audit logging all working |
-| **Event-Driven Architecture** | ✅ Complete | Refactored from polling to nervous system model; fully async/await |
-| **Plugin System** | 🔄 Reorganizing | Plugin code is complete; being categorized into sensors/actuators/cognition/system |
-| **Documentation Suite** | ✅ Complete | 6 new guides (2,123 lines) covering event-driven patterns, troubleshooting, migration |
-| **Backend (WebSocket)** | ✅ Complete | Pure event server with dashboard support; production-ready |
-| **Dashboard** | ✅ Complete | Real-time UI with 5 panels (sensor, actuator, world model, reflex, event log) |
-| **Examples** | ⏳ Coming Soon | Examples folder created; full tutorial code coming next |
-| **Tests** | ✅ Complete | Unit tests passing; integration tests in place |
+| **Core Engine** | ✅ Stable | All 13 subsystems working: orchestrator, scheduler, tool registry, world model, audit, plugin system |
+| **Event-Driven Architecture** | ✅ Complete | Fully async/await nervous system with sensor→reflex→actuator event loops |
+| **Tools (7 total)** | ✅ Complete | Video, audio, TTS, simulated, analysis, network, filesystem — all implemented and tested |
+| **Plugin System** | ✅ Complete | Organized by category: sensors/, actuators/, cognition/, system/. Auto-discovery works. |
+| **WebSocket Backend** | ✅ Complete | Pure standalone server (280 lines). Production-ready with deployment guides. |
+| **Dashboard** | ✅ Complete | 15 files (index.html, 11 JS, 3 CSS). Real-time panels: sensor, actuator, world model, reflex, event log. |
+| **Operator UI** | ✅ Complete | Flask admin dashboard with approval console, agent monitoring, audit viewer. |
+| **Documentation Suite** | ✅ Complete | 23 guides (2,500+ lines): quick start, architecture, cheatsheet, migration, troubleshooting, API, plugins, roadmap. |
+| **Examples** | ✅ Complete | 4 agent examples: event-driven, scripted, LLM adapter, LLM production adapter. |
+| **Tests** | ✅ Complete | 6 test modules, 111+ tests passing. Core systems covered. |
+| **Safety & Audit** | ✅ Complete | Permission scopes, rate limiting, SHA256-hashed audit trail, per-agent quotas. |
 
-**What's ready to use:** Core engine, world model, tool system, audit logging, plugin registration, safety/permissions  
-**What's being refined:** Dashboard UI, plugin examples, documentation guides (those are written, not code)  
-**What's coming next:** Example agents, dashboard completion, performance optimization
+**What's ready now:** Everything above. Core architecture is stable. Deploy to production.  
+**What's being refined:** Extended examples/tutorials, performance optimization, deployment templates.  
+**What's not yet built:** Browser automation tools, SDR/robot tools, benchmark suite (on roadmap for Phase 4).
+
+> 📋 **See [AUDIT_REPORT_FEB_2026.md](AUDIT_REPORT_FEB_2026.md)** for a detailed grounded audit of what's actually implemented vs. the roadmap.
 
 ---
 
@@ -299,15 +304,16 @@ That's it. Your agent reads what the body senses, makes decisions, and tells the
 - **Complete documentation** (7 guides, screenshots, quick-start)
 - Tests (unit and integration tests passing)
 
-**🔄 In Progress:**
-- Extended example library (structure in place)
+**🔄 In Progress/Refined:**
+- Extended example tutorials and documentation
 - Additional sensor/actuator templates
-
-**⏳ Coming Next:**
 - Performance optimization & benchmarking
-- Network tools (HTTP, DNS, ping)
-- Filesystem tools (sandboxed safe access)
+
+**⏳ Coming Next (Phase 4):**
 - Browser automation tools
+- Robot/SDR tools
+- Benchmark suite
+- See [PHASE_4_ROADMAP.md](PHASE_4_ROADMAP.md) for details
 
 ---
 
@@ -943,25 +949,22 @@ Returns engine status and version.
 
 ## 🛣️ Roadmap
 
-### Current (February 2026)
+### Phase 1-3: Complete ✅ (February 2026)
 - ✅ Event-driven nervous system architecture
-- ✅ Plugin system with categorized organization
-- ✅ Comprehensive documentation suite (6 guides)
-- 🔄 Dashboard rewrite (WebSocket events, remove polling)
-- 🔄 Example agents (structure in place, code coming)
+- ✅ All 7 core tools (video, audio, tts, simulated, analysis, network, filesystem)
+- ✅ Plugin system with categorized organization (sensors/, actuators/, cognition/, system/)
+- ✅ Comprehensive documentation suite (23 guides, 2,500+ lines)
+- ✅ Production WebSocket backend and real-time dashboard
+- ✅ Operator UI (Flask admin dashboard)
+- ✅ 4 example agents (event-driven, scripted, LLM adapter, LLM production)
 
-### Next (March 2026)
-- Complete dashboard rewrite with event listeners
-- Full tutorial examples in `examples/` folder
-- Performance benchmarking and optimization
-- Extended plugin library (more sensor/actuator templates)
+### Phase 4: In Development (March-May 2026)
+- 🔄 Browser automation tools (`open_url`, `click`, `extract_text`)
+- 🔄 Benchmark suite (sim-to-real transfer validation)
+- 🔄 Robot/SDR tools (extensible hardware interface)
+- 🔄 Extended examples and tutorials
 
-### Future (Q2 2026)
-- Network tools (HTTP, ping, DNS)
-- Filesystem tools (safe sandboxed access)
-- Browser automation tools
-- Real-world sensor integrations
-- Cloud deployment guides
+See [PHASE_4_ROADMAP.md](PHASE_4_ROADMAP.md) and [docs/ROADMAP.md](docs/ROADMAP.md) for detailed timeline.
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed development plan.
 
