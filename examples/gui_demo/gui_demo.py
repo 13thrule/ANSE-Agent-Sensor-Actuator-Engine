@@ -155,7 +155,8 @@ class GUIDemoBackend:
         This is the SENSOR phase of the nervous system:
         Sensor > World Model
         """
-        print("\n[SENSOR] Starting distance sensor simulation...")
+        print("[SENSOR] Starting distance sensor simulation...")
+        print("[SENSOR] Distance: 50cm (safe) > approaching > 5cm (dangerous) > receding > 50cm (safe)\n")
         
         iteration = 0
         while True:
@@ -185,6 +186,11 @@ class GUIDemoBackend:
             
             # Send updated state snapshot
             await self.send_current_state()
+            
+            # Show progress every 5 events
+            if self.world_model and len(self.world_model.get_recent(100)) % 5 == 0:
+                event_count = len(self.world_model.get_recent(100))
+                print(f"[DEMO] {event_count} events recorded, distance={self.distance:.1f}cm, state={self.movement_state}")
             
             await asyncio.sleep(1.5)  # Sensor reads every 1.5 seconds
     
