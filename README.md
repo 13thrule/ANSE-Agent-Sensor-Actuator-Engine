@@ -23,7 +23,8 @@ ANSE is a local runtime engine for building autonomous agents with sensor access
 | **Event-Driven Architecture** | ✅ Complete | Refactored from polling to nervous system model; fully async/await |
 | **Plugin System** | 🔄 Reorganizing | Plugin code is complete; being categorized into sensors/actuators/cognition/system |
 | **Documentation Suite** | ✅ Complete | 6 new guides (2,123 lines) covering event-driven patterns, troubleshooting, migration |
-| **Dashboard** | 🔄 Mid-Rewrite | HTML/TypeScript/Svelte components exist; moving from polling to WebSocket events |
+| **Backend (WebSocket)** | ✅ Complete | Pure event server with dashboard support; production-ready |
+| **Dashboard** | ✅ Complete | Real-time UI with 5 panels (sensor, actuator, world model, reflex, event log) |
 | **Examples** | ⏳ Coming Soon | Examples folder created; full tutorial code coming next |
 | **Tests** | ✅ Complete | Unit tests passing; integration tests in place |
 
@@ -142,8 +143,9 @@ Here's what each folder contains and its maturity level:
 ### UI & Presentation
 | Folder | Purpose | Maturity |
 |--------|---------|----------|
-| **[dashboard_ui/](dashboard_ui/)** | Web dashboard (HTML/TS/Svelte components) | 🔄 In Transition |
-| **[examples/](examples/)** | Full example agents and tutorials | ⏳ Coming Soon |
+| **[dashboard/](dashboard/)** | Production web dashboard (HTML/CSS/JS) — real-time event panels | ✅ Complete |
+| **[backend/](backend/)** | Pure WebSocket server for dashboard backend — production deployment ready | ✅ Complete |
+| **[examples/gui_demo/](examples/gui_demo/)** | Reference demo implementation | ✅ Reference |
 
 ### Documentation
 | Folder | Purpose | Maturity |
@@ -206,18 +208,20 @@ ANSE has six comprehensive event-driven architecture guides. **Here's when to us
 |--------|---------|
 | **[anse/](anse/)** | Core engine: world model, scheduler, tool registry, plugins |
 | **[plugins/](plugins/)** | Sensor, actuator, cognition, and system plugins organized by category |
+| **[backend/](backend/)** | WebSocket server for dashboard — pure event broadcaster |
+| **[dashboard/](dashboard/)** | Production web dashboard — real-time nervous system visualization |
 | **[examples/](examples/)** | Example implementations and tutorial code |
 | **[docs/](docs/)** | Complete documentation: guides, references, troubleshooting |
-| **[dashboard_ui/](dashboard_ui/)** | Web interface for monitoring agents and the world model |
 | **[operator_ui/](operator_ui/)** | Flask admin dashboard for approvals and audit logs |
 | **[tests/](tests/)** | Unit and integration tests |
 | **[scripts/](scripts/)** | Utility scripts (setup, deployment, debugging) |
 
 **Quick Navigation:**
-- 🚀 [Quick Start](docs/QUICKSTART.md)
+- 🚀 [Quick Start](#quick-start) — Get running in 30 seconds
+- 📊 [Dashboard](QUICK_START.md) — Real-time event visualization
 - 📚 [Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md) — How ANSE works
-- 🔧 [Built Sensors?](plugins/sensors/README.md) | [Built Actuators?](plugins/actuators/README.md)
-- 🧠 [Cognition Plugins?](plugins/cognition/README.md) | [System Plugins?](plugins/system/README.md)
+- 🔧 [Backend Setup](backend/README.md) — Production deployment
+- 👀 [Screenshots Guide](SCREENSHOTS.md) — Visual walkthrough
 
 ---
 

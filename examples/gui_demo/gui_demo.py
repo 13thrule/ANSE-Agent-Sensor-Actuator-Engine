@@ -158,16 +158,18 @@ class GUIDemoBackend:
     
     async def broadcast_world_model_snapshot(self):
         """Broadcast the current world model state (brain snapshot) to all clients."""
+        world_model_data = {
+            "distance_cm": round(self.distance, 1),
+            "safe": self.distance > 10,
+            "actuator_state": self.movement_state,
+            "last_reflex": self.last_reflex or "none",
+            "total_events": len(self.world_model.get_recent(100)) if self.world_model else 0
+        }
+        
         snapshot = {
             "type": "world_model_update",
             "timestamp": datetime.now().isoformat(),
-            "world_model": {
-                "distance_cm": round(self.distance, 1),
-                "safe": self.distance > 10,
-                "actuator_state": self.movement_state,
-                "last_reflex": self.last_reflex or "none",
-                "total_events": len(self.world_model.get_recent(100)) if self.world_model else 0
-            }
+            "data": world_model_data
         }
         
         message = json.dumps(snapshot)

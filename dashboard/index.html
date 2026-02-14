@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANSE Dashboard - Agent Nervous System Engine</title>
+    <meta name="description" content="Real-time monitoring dashboard for ANSE - Agent Nervous System Engine">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/panels.css">
+    <link rel="stylesheet" href="css/animations.css">
+
+    <style>
+        /* Prevent FOUC (Flash of Unstyled Content) */
+        body {
+            display: none;
+        }
+        body.loaded {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">⚡ ANSE</div>
+            <div class="title">Dashboard</div>
+        </div>
+        <div class="header-right">
+            <div class="connection-status status-disconnected">
+                Disconnected
+            </div>
+            <button id="connect-btn">Connect</button>
+        </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <span>Ready</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div id="panels-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- WebSocket Manager -->
+    <script src="js/websocket.js"></script>
+
+    <!-- Panel System -->
+    <script src="js/panels/panelManager.js"></script>
+    <script src="js/panels/basePanel.js"></script>
+
+    <!-- Individual Panels -->
+    <script src="js/panels/sensorPanel.js"></script>
+    <script src="js/panels/actuatorPanel.js"></script>
+    <script src="js/panels/worldmodelPanel.js"></script>
+    <script src="js/panels/reflexPanel.js"></script>
+    <script src="js/panels/eventlogPanel.js"></script>
+
+    <!-- Main Application -->
+    <script src="js/app.js"></script>
+
+    <script>
+        // Show page after assets load
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+        });
+
+        // Fallback if load event doesn't fire
+        setTimeout(() => {
+            document.body.classList.add('loaded');
+        }, 2000);
+    </script>
+</body>
+</html>
