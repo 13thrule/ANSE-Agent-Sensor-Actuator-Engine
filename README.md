@@ -9,7 +9,27 @@
 
 ANSE is a local runtime engine for building autonomous agents with sensor access and tool calling. Instead of manually wiring sensor drivers and agent logic, define your tools once and agents discover + use them autonomously.
 
-**[Quick Start](#quick-start) | [Run Demo](#run-the-demo) | [Architecture](#architecture) | [Plugins](#plugin-system) | [Docs](#documentation)**
+**[Project Status](#-project-status) | [Folder Map](#-folder-overview) | [Docs](#-documentation-map) | [Quick Start](#quick-start) | [Architecture](#architecture)**
+
+---
+
+## 🔄 Project Status
+
+**ANSE is in active development** — the architecture is stable, but components are being reorganized for clarity.
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Core Engine** | ✅ Stable | Engine core, world model, scheduler, tool registry, audit logging all working |
+| **Event-Driven Architecture** | ✅ Complete | Refactored from polling to nervous system model; fully async/await |
+| **Plugin System** | 🔄 Reorganizing | Plugin code is complete; being categorized into sensors/actuators/cognition/system |
+| **Documentation Suite** | ✅ Complete | 6 new guides (2,123 lines) covering event-driven patterns, troubleshooting, migration |
+| **Dashboard** | 🔄 Mid-Rewrite | HTML/TypeScript/Svelte components exist; moving from polling to WebSocket events |
+| **Examples** | ⏳ Coming Soon | Examples folder created; full tutorial code coming next |
+| **Tests** | ✅ Complete | Unit tests passing; integration tests in place |
+
+**What's ready to use:** Core engine, world model, tool system, audit logging, plugin registration, safety/permissions  
+**What's being refined:** Dashboard UI, plugin examples, documentation guides (those are written, not code)  
+**What's coming next:** Example agents, dashboard completion, performance optimization
 
 ---
 
@@ -72,32 +92,109 @@ ANSE_SIMULATE=1 python agent_demo.py
 
 ---
 
-## Run the Demo
+## 🔍 What's Working vs. What's In Progress
 
-**Terminal 1:**
-```bash
-python -m anse.engine_core
-```
+**✅ Fully Functional & Stable:**
+- Core engine (world model, scheduler, tool registry)
+- Event-driven nervous system (async/await, event streaming)
+- Plugin system (YAML and Python plugins)
+- Sensor tools (camera, audio, TTS with analysis)
+- Simulated tools (deterministic testing without hardware)
+- Safety & permissions system (scopes, rate limiting, audit logs)
+- Audit trail (immutable JSONL, SHA256 hashing)
+- Operator UI (Flask admin dashboard)
+- Tests (unit and integration tests passing)
 
-**Terminal 2:**
-```bash
-python agent_demo.py
-```
+**🔄 In Progress (Code Complete, UI Being Updated):**
+- Dashboard rewrite (moving from polling setInterval to WebSocket events)
+- Example agents (structure in place, tutorial code being added)
+- Event-driven reflexes (code working, documentation complete)
 
-**Sample output:**
-```
-✓ Calling capture_frame() → 640×480 RGB image
-✓ Calling analyze_frame() → 9,866 edges | 554 corners | Avg color: BGR(43,52,71)
+**⏳ Coming Next (No ETA, But Planned):**
+- Extended example library (full agent walkthroughs)
+- Performance optimization & benchmarking
+- Additional sensor/actuator templates
+- Network tools (HTTP, DNS, ping)
+- Filesystem tools (sandboxed safe access)
+- Browser automation tools
 
-✓ Calling record_audio() → 2.0s @ 16kHz stereo
-✓ Calling analyze_audio() → RMS: 0.0206 | Peak: 0.1689 | Freqs: [223, 219, 212] Hz
+---
 
-✓ Calling say() → "I can see, hear, and speak"
+## 📂 Folder Overview
 
-📝 Agent memory: 5 actions logged with timestamps
-```
+Here's what each folder contains and its maturity level:
 
-See [docs/AUTONOMOUS_AGENT_UPDATE.md](docs/AUTONOMOUS_AGENT_UPDATE.md) for implementation details.
+### Core System
+| Folder | Purpose | Maturity |
+|--------|---------|----------|
+| **[anse/](anse/)** | Core engine, world model, scheduler, async runtime | ✅ Stable |
+| **[tests/](tests/)** | Unit and integration tests | ✅ Stable |
+| **[operator_ui/](operator_ui/)** | Flask admin dashboard, approvals, audit logs | ✅ Stable |
+
+### Plugins (Organized by Role)
+| Folder | Purpose | Maturity |
+|--------|---------|----------|
+| **[plugins/sensors/](plugins/sensors/)** | Sensor templates + examples (Arduino, Modbus, Hue, etc.) | ✅ Complete |
+| **[plugins/actuators/](plugins/actuators/)** | Motor control and actuator interfaces | ✅ Complete |
+| **[plugins/cognition/](plugins/cognition/)** | Body schema, long-term memory, reward system | ✅ Complete |
+| **[plugins/system/](plugins/system/)** | Reflex system, dashboard bridge, infrastructure | ✅ Complete |
+
+### UI & Presentation
+| Folder | Purpose | Maturity |
+|--------|---------|----------|
+| **[dashboard_ui/](dashboard_ui/)** | Web dashboard (HTML/TS/Svelte components) | 🔄 In Transition |
+| **[examples/](examples/)** | Full example agents and tutorials | ⏳ Coming Soon |
+
+### Documentation
+| Folder | Purpose | Maturity |
+|--------|---------|----------|
+| **[docs/](docs/)** | All guides, references, API docs (21 files) | ✅ Complete |
+| **[scripts/](scripts/)** | Utility scripts for setup, debug, deploy | ⏳ Coming Soon |
+
+---
+
+## 📚 Documentation Map
+
+ANSE has six comprehensive event-driven architecture guides. **Here's when to use each:**
+
+### 🚀 **Just Starting?**
+1. **[QUICKSTART.md](docs/QUICKSTART.md)** (5 min read)
+   - Install and run the demo
+   - See your first agent in action
+   - Tests passing? You're good to go.
+
+2. **[EVENT_DRIVEN_ARCHITECTURE.md](docs/EVENT_DRIVEN_ARCHITECTURE.md)** (15 min read)
+   - How ANSE works as a nervous system
+   - Event flow, world model, reflexes, agents
+   - Core principles and patterns
+
+### 🔧 **Building Something?**
+3. **[IMPLEMENTATION_CHECKLIST.md](docs/IMPLEMENTATION_CHECKLIST.md)** (step-by-step guide)
+   - Structured 6-phase approach (10-20 days)
+   - Build agents, sensors, actuators step-by-step
+   - Includes code templates and testing strategies
+
+4. **[EVENT_DRIVEN_CHEATSHEET.md](docs/EVENT_DRIVEN_CHEATSHEET.md)** (quick reference)
+   - 5-minute patterns you'll use constantly
+   - Copy-paste ready code examples
+   - Do's and don'ts
+
+### 🔄 **Migrating Existing Code?**
+5. **[MIGRATION_POLLING_TO_EVENTS.md](docs/MIGRATION_POLLING_TO_EVENTS.md)** (practical guide)
+   - Convert polling loops to event listeners
+   - Before/after code examples
+   - Performance gains (25x latency, 82% CPU reduction)
+
+### 🛠️ **Debugging Issues?**
+6. **[TROUBLESHOOTING_EVENT_DRIVEN.md](docs/TROUBLESHOOTING_EVENT_DRIVEN.md)** (problem solver)
+   - 5 major problem categories with solutions
+   - Debugging checklist (8 steps)
+   - Hardware polling detection methods
+
+### 📖 **Other Resources**
+- **[DESIGN.md](docs/DESIGN.md)** — Architecture deep-dive (system components, async patterns)
+- **[API.md](docs/API.md)** — Complete API reference
+- **[PLUGINS.md](docs/PLUGINS.md)** — Building custom sensors and tools
 
 ---
 
@@ -604,13 +701,38 @@ Returns engine status and version.
 
 ---
 
+## 🛣️ Roadmap
+
+### Current (February 2026)
+- ✅ Event-driven nervous system architecture
+- ✅ Plugin system with categorized organization
+- ✅ Comprehensive documentation suite (6 guides)
+- 🔄 Dashboard rewrite (WebSocket events, remove polling)
+- 🔄 Example agents (structure in place, code coming)
+
+### Next (March 2026)
+- Complete dashboard rewrite with event listeners
+- Full tutorial examples in `examples/` folder
+- Performance benchmarking and optimization
+- Extended plugin library (more sensor/actuator templates)
+
+### Future (Q2 2026)
+- Network tools (HTTP, ping, DNS)
+- Filesystem tools (safe sandboxed access)
+- Browser automation tools
+- Real-world sensor integrations
+- Cloud deployment guides
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed development plan.
+
+---
+
 ## Development Status
 
-**Phase 1 ✅** — Health monitoring, operator UI, simulated sensors  
-**Phase 2 ✅** — Multiagent isolation, LLM adapter template, audit/replay  
-**Phase 3 🔄** — Network tools (http_get, ping), filesystem tools, browser tools (planned)
-
-See [ROADMAP.md](ROADMAP.md) for detailed development plan.
+**Phase 1 ✅** — Core engine, event-driven architecture, plugin system, audit logging  
+**Phase 2 ✅** — Multi-agent isolation, safety & permissions, comprehensive documentation  
+**Phase 3 🔄** — Dashboard rewrite, example agents, extended tools (in progress)  
+**Phase 4 ⏳** — Network tools, filesystem tools, browser automation (coming next)
 
 ---
 
@@ -640,19 +762,23 @@ See [docs/API.md](docs/API.md) for complete examples.
 
 ---
 
-## Documentation
+## 📖 Full Documentation Index
 
-- **[Quick Start Guide](docs/QUICKSTART.md)** — Hands-on tutorial
-- **[Event-Driven Cheat Sheet](docs/EVENT_DRIVEN_CHEATSHEET.md)** — Quick reference for patterns and commands
-- **[Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md)** — How ANSE works as a nervous system (event-driven, not polling)
-- **[Migration from Polling to Events](docs/MIGRATION_POLLING_TO_EVENTS.md)** — Practical guide for converting existing code
-- **[Implementation Checklist](docs/IMPLEMENTATION_CHECKLIST.md)** — Step-by-step guide for building event-driven systems
-- **[Troubleshooting Event-Driven Issues](docs/TROUBLESHOOTING_EVENT_DRIVEN.md)** — Common problems and solutions
-- **[Architecture & Design](docs/DESIGN.md)** — Deep dive into ANSE internals
-- **[API Reference](docs/API.md)** — Complete tool and method documentation
-- **[Plugin Development](docs/PLUGINS.md)** — Building custom sensors and tools
-- **[Roadmap](docs/ROADMAP.md)** — Future features and development plan
-- **[Autonomous Agent Update](docs/AUTONOMOUS_AGENT_UPDATE.md)** — Implementation details of demo agent
+**See [Documentation Map](#-documentation-map) above for when to use each guide.**
+
+Complete reference:
+- **[Quick Start Guide](docs/QUICKSTART.md)** — Install, run demo, verify setup
+- **[Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md)** — Core nervous system model (complete)
+- **[Event-Driven Cheat Sheet](docs/EVENT_DRIVEN_CHEATSHEET.md)** — Quick reference, copy-paste patterns
+- **[Migration from Polling to Events](docs/MIGRATION_POLLING_TO_EVENTS.md)** — Convert existing code (with examples)
+- **[Implementation Checklist](docs/IMPLEMENTATION_CHECKLIST.md)** — Structured 6-phase guide (10-20 days)
+- **[Troubleshooting Event-Driven Issues](docs/TROUBLESHOOTING_EVENT_DRIVEN.md)** — Problem solving & debugging
+- **[Architecture & Design](docs/DESIGN.md)** — Engine internals, component interactions
+- **[API Reference](docs/API.md)** — Tool schemas, method signatures, JSON-RPC interface
+- **[Plugin Development](docs/PLUGINS.md)** — Building sensors, actuators, cognitive plugins
+- **[Roadmap](docs/ROADMAP.md)** — Future features and development timeline
+- **[Installation Guide](docs/INSTALLATION.md)** — Detailed setup for each platform
+- **[Autonomous Agent Demo](docs/AUTONOMOUS_AGENT_UPDATE.md)** — How the working example works internally
 
 ---
 
