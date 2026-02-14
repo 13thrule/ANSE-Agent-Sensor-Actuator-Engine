@@ -153,6 +153,26 @@ class GUIDemoBackend:
                 return_exceptions=True
             )
     
+    async def broadcast_world_model_snapshot(self):
+        """Broadcast the current world model state (brain snapshot) to all clients."""
+        snapshot = {
+            "type": "world_model_update",
+            "timestamp": datetime.now().isoformat(),
+            "world_model": {
+                "distance_cm": round(self.distance, 1),
+                "safe": self.distance > 10,
+                "actuator_state": self.movement_state,
+                "total_events": len(self.world_model.get_recent(100)) if self.world_model else 0
+            }
+        }
+        
+        message = json.dumps(snapshot)
+        if self.clients:
+            await asyncio.gather(
+                *[client.send(message) for client in self.clients if client],
+                return_exceptions=True
+            )
+    
     async def record_and_broadcast_event(self, event_type: str, event_data: dict):
         """Record event to world model AND broadcast to GUI."""
         # Record to ANSE world model
@@ -167,6 +187,9 @@ class GUIDemoBackend:
         
         # Broadcast to GUI
         await self.broadcast_world_model_event(event)
+        
+        # Broadcast world model snapshot (brain state)
+        await self.broadcast_world_model_snapshot()
     
     async def simulate_distance_sensor(self):
         """

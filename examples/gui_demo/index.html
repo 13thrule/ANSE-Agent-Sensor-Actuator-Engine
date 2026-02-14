@@ -397,6 +397,36 @@
         function handleEvent(event) {
             const { type, timestamp, data } = event;
             
+            // Handle world model updates (brain snapshot)
+            if (type === 'world_model_update') {
+                const worldModel = data.world_model;
+                const worldModelPanel = document.getElementById('worldmodel-panel');
+                
+                worldModelPanel.innerHTML = `
+                    <div class="world-model-status">
+                        <div style="font-size: 0.9em; color: #888; margin-bottom: 10px;">
+                            Updated: ${timestamp.substring(11, 19)}
+                        </div>
+                        <div class="sensor-reading">
+                            <div class="label">DISTANCE</div>
+                            <div class="value">${worldModel.distance_cm}cm</div>
+                            <div style="font-size: 0.8em; color: ${worldModel.safe ? '#00ff00' : '#ff6600'};">
+                                ${worldModel.safe ? '✓ SAFE' : '⚠ DANGEROUS'}
+                            </div>
+                        </div>
+                        <div class="sensor-reading">
+                            <div class="label">STATE</div>
+                            <div class="value">${worldModel.actuator_state}</div>
+                        </div>
+                        <div class="sensor-reading">
+                            <div class="label">TOTAL EVENTS</div>
+                            <div class="value">${worldModel.total_events}</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             eventCount++;
             document.getElementById('event-count').textContent = eventCount;
             
@@ -492,26 +522,6 @@
                 
                 addEventToLog('actuator_event', { timestamp, data });
                 addEventToTimeline('actuator');
-            }
-            
-            // Update world model panel with last event
-            const worldModelPanel = document.getElementById('world-model-panel');
-            if (worldModelPanel && type !== 'state_update') {
-                const eventItem = document.createElement('div');
-                eventItem.className = 'event-item';
-                eventItem.style.borderLeft = '3px solid #00d9ff';
-                eventItem.innerHTML = `
-                    <div class="event-time">${type.replace('_', ' ').toUpperCase()}</div>
-                    <div class="event-details" style="font-size: 0.85em;">
-                        ${JSON.stringify(data).substring(0, 60)}...
-                    </div>
-                `;
-                
-                // Keep last 5 events
-                worldModelPanel.insertBefore(eventItem, worldModelPanel.firstChild);
-                while (worldModelPanel.children.length > 5) {
-                    worldModelPanel.removeChild(worldModelPanel.lastChild);
-                }
             }
         }
 
