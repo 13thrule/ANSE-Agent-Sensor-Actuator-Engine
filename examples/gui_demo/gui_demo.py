@@ -228,8 +228,7 @@ class GUIDemoBackend:
         if self.distance < 10 and self.movement_state != "STOPPED":
             # Reflex triggered!
             await self.record_and_broadcast_event("reflex_triggered", {
-                "reflex_id": "proximity_safeguard",
-                "name": "Proximity Alert",
+                "reflex": "Proximity Alert",
                 "condition": "distance < 10cm",
                 "action": "STOP"
             })
@@ -240,8 +239,7 @@ class GUIDemoBackend:
         elif self.distance > 15 and self.movement_state == "STOPPED":
             # Safe zone again, can move
             await self.record_and_broadcast_event("reflex_triggered", {
-                "reflex_id": "clear_to_move",
-                "name": "Clear to Move",
+                "reflex": "Clear to Move",
                 "condition": "distance > 15cm",
                 "action": "RESUME"
             })

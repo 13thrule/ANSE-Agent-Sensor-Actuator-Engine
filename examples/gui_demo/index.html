@@ -411,10 +411,9 @@
                         html.className = 'sensor-reading';
                         html.innerHTML = `
                             <div class="label">${name.replace(/_/g, ' ').toUpperCase()}</div>
-                            <div class="value">${typeof value === 'boolean' ? (value ? '✓ ON' : '✗ OFF') : value}</div>
+                            <div class="value">${typeof value === 'boolean' ? (value ? '✓' : '✗') : value}</div>
                         `;
                         sensorsPanel.appendChild(html);
-                        addEventToTimeline('sensor');
                     }
                 }
                 
@@ -428,35 +427,91 @@
                         html.className = 'sensor-reading';
                         html.innerHTML = `
                             <div class="label">${name.replace(/_/g, ' ').toUpperCase()}</div>
-                            <div class="value">${typeof value === 'boolean' ? (value ? '✓ ON' : '✗ OFF') : value}</div>
+                            <div class="value">${value}</div>
                         `;
                         actuatorsPanel.appendChild(html);
                     }
                 }
                 
-                // Update reflexes
-                const reflexesPanel = document.getElementById('reflexes-panel');
-                if (data.reflexes && data.reflexes.length > 0) {
-                    reflexesPanel.innerHTML = '';
-                    data.reflexes.forEach(reflex => {
-                        const html = document.createElement('div');
-                        html.className = 'event-item reflex';
-                        html.innerHTML = `
-                            <div class="event-time">${reflex.name || 'Unknown Reflex'}</div>
-                            <div class="event-details">${reflex.action || ''}</div>
-                        `;
-                        reflexesPanel.appendChild(html);
-                    });
-                }
             } else if (type === 'sensor_event') {
+                // Update sensor panel with new reading
+                const sensorsPanel = document.getElementById('sensors-panel');
+                sensorsPanel.innerHTML = '';
+                
+                const dist = data.distance_cm;
+                const safe = data.safe;
+                const safeStatus = safe ? '✓ SAFE' : '⚠ CLOSE';
+                
+                const html = document.createElement('div');
+                html.className = 'sensor-reading';
+                html.innerHTML = `
+                    <div class="label">DISTANCE</div>
+                    <div class="value">${dist}cm</div>
+                    <div style="font-size: 0.8em; color: ${safe ? '#00ff00' : '#ff6600'};">${safeStatus}</div>
+                `;
+                sensorsPanel.appendChild(html);
+                
                 addEventToLog('sensor_event', { timestamp, data });
                 addEventToTimeline('sensor');
+                
             } else if (type === 'reflex_event') {
+                // Update reflexes panel
+                const reflexesPanel = document.getElementById('reflexes-panel');
+                reflexesPanel.innerHTML = '';
+                
+                const reflex = data.reflex || 'Unknown';
+                const action = data.action || '';
+                
+                const html = document.createElement('div');
+                html.className = 'event-item reflex';
+                html.innerHTML = `
+                    <div class="event-time">${reflex}</div>
+                    <div class="event-details">${action}</div>
+                `;
+                reflexesPanel.appendChild(html);
+                
                 addEventToLog('reflex_event', { timestamp, data });
                 addEventToTimeline('reflex');
+                
             } else if (type === 'actuator_event') {
+                // Update actuators panel with state transition
+                const actuatorsPanel = document.getElementById('actuators-panel');
+                actuatorsPanel.innerHTML = '';
+                
+                const oldState = data.old_state || '?';
+                const newState = data.new_state || '?';
+                
+                const html = document.createElement('div');
+                html.className = 'sensor-reading';
+                html.innerHTML = `
+                    <div class="label">MOVEMENT</div>
+                    <div class="value">${newState}</div>
+                    <div style="font-size: 0.8em; color: #888;">${oldState} → ${newState}</div>
+                `;
+                actuatorsPanel.appendChild(html);
+                
                 addEventToLog('actuator_event', { timestamp, data });
                 addEventToTimeline('actuator');
+            }
+            
+            // Update world model panel with last event
+            const worldModelPanel = document.getElementById('world-model-panel');
+            if (worldModelPanel && type !== 'state_update') {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                eventItem.style.borderLeft = '3px solid #00d9ff';
+                eventItem.innerHTML = `
+                    <div class="event-time">${type.replace('_', ' ').toUpperCase()}</div>
+                    <div class="event-details" style="font-size: 0.85em;">
+                        ${JSON.stringify(data).substring(0, 60)}...
+                    </div>
+                `;
+                
+                // Keep last 5 events
+                worldModelPanel.insertBefore(eventItem, worldModelPanel.firstChild);
+                while (worldModelPanel.children.length > 5) {
+                    worldModelPanel.removeChild(worldModelPanel.lastChild);
+                }
             }
         }
 
