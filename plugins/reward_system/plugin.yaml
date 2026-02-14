@@ -1,0 +1,81 @@
+name: reward_system
+description: Motivation loop and reward tracking for reinforcement learning
+version: 1.0.0
+
+tools:
+  - name: reward
+    description: Give the agent a reward or penalty
+    parameters:
+      type: object
+      properties:
+        value:
+          type: number
+          description: Reward value (positive or negative)
+        reason:
+          type: string
+          description: Optional reason for reward
+      required: [value]
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        reward_given:
+          type: number
+        total_reward:
+          type: number
+        timestamp:
+          type: string
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_reward_total
+    description: Get total accumulated reward
+    parameters: {}
+    returns:
+      type: object
+      properties:
+        total_reward:
+          type: number
+        reward_count:
+          type: integer
+        average_reward:
+          type: number
+    sensitivity: public
+    rate_limit: 30
+
+  - name: reset_rewards
+    description: Reset reward accumulator to zero
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 5
+
+  - name: get_reward_history
+    description: Get recent reward events
+    parameters:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 10
+    returns:
+      type: array
+      items:
+        type: object
+    sensitivity: public
+    rate_limit: 20
+
+  - name: set_reward_threshold
+    description: Set minimum reward threshold for goal achievement
+    parameters:
+      type: object
+      properties:
+        threshold:
+          type: number
+      required: [threshold]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 5

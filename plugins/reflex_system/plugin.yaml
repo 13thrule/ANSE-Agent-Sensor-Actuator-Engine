@@ -1,0 +1,65 @@
+name: reflex_system
+description: Fast, non-LLM reflex actions triggered by sensor thresholds
+version: 1.0.0
+
+tools:
+  - name: add_reflex
+    description: Add a reflex rule (sensor threshold -> action)
+    parameters:
+      type: object
+      properties:
+        sensor_name:
+          type: string
+          description: Name of sensor to monitor
+        threshold:
+          type: number
+          description: Threshold value to trigger action
+        comparison:
+          type: string
+          enum: [greater_than, less_than, equal_to]
+          description: How to compare sensor value to threshold
+        action_tool:
+          type: string
+          description: Tool name to call when threshold is crossed
+        action_args:
+          type: object
+          description: Arguments to pass to action tool
+      required: [sensor_name, threshold, comparison, action_tool]
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        reflex_id:
+          type: string
+    sensitivity: public
+    rate_limit: 5
+
+  - name: list_reflexes
+    description: List all active reflex rules
+    parameters: {}
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: remove_reflex
+    description: Remove a reflex rule by ID
+    parameters:
+      type: object
+      properties:
+        reflex_id:
+          type: string
+      required: [reflex_id]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 5
+
+  - name: enable_background_monitoring
+    description: Start background monitoring loop
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 2

@@ -1,0 +1,79 @@
+name: motor_control
+description: Motor and servo control for robotic actuators
+version: 1.0.0
+
+tools:
+  - name: set_wheel_speed
+    description: Set left and right wheel speeds (-100 to 100, where 0 is stop)
+    parameters:
+      type: object
+      properties:
+        left_speed:
+          type: number
+          description: Left wheel speed (-100 to 100)
+        right_speed:
+          type: number
+          description: Right wheel speed (-100 to 100)
+      required: [left_speed, right_speed]
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        left_speed:
+          type: number
+        right_speed:
+          type: number
+    sensitivity: public
+    rate_limit: 10
+
+  - name: set_servo_angle
+    description: Move a servo to a specific angle
+    parameters:
+      type: object
+      properties:
+        servo_id:
+          type: integer
+          description: Servo identifier
+        angle:
+          type: number
+          description: Target angle in degrees (0-180 typical)
+        speed:
+          type: number
+          description: Movement speed (0-100, optional)
+      required: [servo_id, angle]
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+        servo_id:
+          type: integer
+        angle:
+          type: number
+    sensitivity: public
+    rate_limit: 5
+
+  - name: get_motor_status
+    description: Get current motor and servo status
+    parameters: {}
+    returns:
+      type: object
+      properties:
+        wheels:
+          type: object
+        servos:
+          type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: stop_all_motors
+    description: Stop all motors and servos immediately
+    parameters: {}
+    returns:
+      type: object
+      properties:
+        status:
+          type: string
+    sensitivity: public
+    rate_limit: 10

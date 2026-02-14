@@ -1,0 +1,82 @@
+name: body_schema
+description: Robot self-model defining available sensors, actuators, and joints
+version: 1.0.0
+
+tools:
+  - name: describe_body
+    description: Get complete description of robot hardware
+    parameters: {}
+    returns:
+      type: object
+      properties:
+        sensors:
+          type: array
+          items:
+            type: object
+        actuators:
+          type: array
+          items:
+            type: object
+        joints:
+          type: array
+          items:
+            type: object
+    sensitivity: public
+    rate_limit: 30
+
+  - name: describe_sensor
+    description: Get detailed info about a specific sensor
+    parameters:
+      type: object
+      properties:
+        sensor_name:
+          type: string
+      required: [sensor_name]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 30
+
+  - name: describe_actuator
+    description: Get detailed info about a specific actuator
+    parameters:
+      type: object
+      properties:
+        actuator_name:
+          type: string
+      required: [actuator_name]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 30
+
+  - name: describe_joint
+    description: Get detailed info about a specific joint
+    parameters:
+      type: object
+      properties:
+        joint_name:
+          type: string
+      required: [joint_name]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 30
+
+  - name: register_component
+    description: Register a new sensor or actuator
+    parameters:
+      type: object
+      properties:
+        component_type:
+          type: string
+          enum: [sensor, actuator, joint]
+        name:
+          type: string
+        properties:
+          type: object
+      required: [component_type, name]
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 5
