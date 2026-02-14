@@ -27,9 +27,9 @@ ANSE is an open-source **local agent engine** providing:
 - **📝 Audit trail** — immutable event logs with SHA256 hashing
 
 **Build with ANSE if you need:**
-- Agents that capture real sensor data
-- Deterministic training environments (sim-to-real)
-- On-device autonomous systems
+- Agents that capture real sensor data and respond autonomously
+- Consistent APIs for testing with simulated sensors and deploying with real hardware
+- On-device autonomous systems without cloud dependencies
 - Tool discovery and autonomous tool use
 - Complete audit trails and reproducibility
 
@@ -101,6 +101,25 @@ See [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for implementation 
 
 ---
 
+## Plugin System (Extensible & Powerful)
+
+ANSE's **plugin system is the core extensibility story** — add custom sensors without modifying the engine:
+
+- **YAML Plugins:** Drop a config file in `plugins/` → agent discovers it automatically (perfect for non-programmers)
+- **Python Plugins:** Async plugin classes with full type hints for complex integrations  
+- **Auto-Registration:** Tools appear in `list_tools()` immediately after restart  
+- **Same API:** Plugins use identical interface as built-in tools
+
+**Include example plugins for:**
+- Philips Hue smart lights
+- Arduino robot arms  
+- Industrial Modbus PLC  
+- Custom temperature sensors  
+
+See [Plugin System Details](#plugin-system) below and [docs/PLUGINS.md](docs/PLUGINS.md) for complete guide.
+
+---
+
 ## Built-In Tools
 
 ### Hardware Tools
@@ -127,6 +146,38 @@ See [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for implementation 
 ### Plugin System
 
 Add custom sensors and tools by creating YAML or Python files in the `plugins/` directory. See [Plugin Examples](#plugin-examples).
+
+---
+
+## Safety & Audit (First-Class, Not Bolted-On)
+
+Safety is built into the engine architecture, not a separate layer:
+
+| Feature | Implementation |
+|---------|----------------|
+| **Permission Scopes** | Per-agent grants (camera, mic, network, filesystem) — deny by default |
+| **Rate Limiting** | Hardware tools rate-limited (30, 10, 20 calls/min); per-agent buckets |
+| **Approval Gates** | High-risk operations can require operator sign-off (built-in UI) |
+| **Audit Trail** | Immutable JSONL log with SHA256 hashes — full provenance |
+| **Local Storage** | Raw media stays local; no external transmission |
+| **Isolation** | Per-agent quotas prevent one agent from impacting others |
+
+**Example:** Cap camera at 30 calls/min per agent. Agent 1 hits limit → Agent 2 still works.
+
+### Audit Log Format
+
+```json
+{
+  "timestamp": "2026-02-14T10:30:45.123456Z",
+  "agent_id": "agent-001",
+  "call_id": "call-12345",
+  "tool": "capture_frame",
+  "args_hash": "abc123d...",
+  "result_hash": "def456e...",
+  "status": "success",
+  "duration_ms": 145
+}
+```
 
 ---
 
@@ -163,14 +214,15 @@ Add custom sensors and tools by creating YAML or Python files in the `plugins/` 
 
 ### Key Components
 
-- **EngineCore** — Initializes all subsystems (tools, scheduler, world model, audit logger, agent bridge)
-- **AgentBridge** — WebSocket server handling `list_tools`, `call_tool`, `get_history`, `ping`
-- **ToolRegistry** — Manages tool schemas, metadata, and execution
-- **Scheduler** — Enforces rate limits, queues calls, handles timeouts
-- **WorldModel** — Append-only JSONL event store for replay and reproducibility
-- **AuditLogger** — SHA256-hashed logging of all tool calls with inputs/outputs
-- **PermissionManager** — Enforces per-agent permission scopes from YAML policy
-- **Tools** — Async-safe wrappers for hardware (video, audio, TTS) and simulated devices
+- **EngineCore** — Orchestrator. Initializes scheduler, tool registry, world model, audit logger, and agent bridge. Loads plugins.
+- **AgentBridge** — WebSocket JSON-RPC server. Handles `list_tools`, `call_tool`, `get_history`, `ping` from agents.
+- **ToolRegistry** — Manages tool schemas, sensitivity labels, and execution routing. Registers built-in + plugin tools.
+- **Scheduler** — Executes tool calls with per-tool rate limiting, timeouts, and call queuing.
+- **WorldModel** — Append-only JSONL event store. Records all calls, results, timestamps. Enables replay and debugging.
+- **AuditLogger** — Cryptographically signed JSONL audit trail. SHA256 hashes of inputs/outputs for non-repudiation.
+- **PermissionManager** — Enforces YAML-based per-agent permission scopes. Deny-by-default policy.
+- **PluginLoader** — Auto-discovers and registers YAML and Python plugins from `plugins/` directory.
+- **Tools** — Async-safe implementations for hardware (video, audio, TTS) and simulated devices. All blocking I/O via `asyncio.to_thread()`.
 
 ---
 
@@ -216,22 +268,24 @@ Add custom sensors and tools by creating YAML or Python files in the `plugins/` 
 
 ## Examples
 
-### Research & Simulation
+### Training with Simulation, Deploying with Hardware
 
-Train agents in simulation, deploy to hardware (same API):
+Simulated and real tools have **identical APIs** — develop and test offline, switch to hardware in production:
 
 ```python
 from anse.engine_core import EngineCore
 
-# Offline training
+# Develop with simulated sensors (no hardware, deterministic, fast)
 engine = EngineCore(simulate=True)
 agent = MyAgent(engine)
-agent.train(iterations=1000)
+agent.test_logic()
 
-# Deploy to real hardware
+# Deploy with real hardware (same code, same API)
 engine = EngineCore(simulate=False)
-agent.run_on_device()
+agent.run_production()
 ```
+
+No code changes. Same tool calls work in both modes.
 
 ### IoT Device Control
 
@@ -243,7 +297,9 @@ python -m anse.engine_core
 # Agent now sees and can call: temperature_sensor_read_temp()
 ```
 
-### Multi-Agent System
+### Multi-Agent System with Isolation
+
+Run multiple agents on one engine with isolated resource quotas:
 
 ```python
 engine = EngineCore()
@@ -251,7 +307,11 @@ engine = EngineCore()
 agent1 = Agent(agent_id="robot-1", engine=engine)
 agent2 = Agent(agent_id="robot-2", engine=engine)
 
-# Each agent gets isolated quotas and rate limits
+# Each agent has its own:
+# - Rate limit quota (e.g., 30 camera calls/min per agent)
+# - CPU budget
+# - Storage quota
+# - Permission scopes (agent1 can use camera, agent2 cannot)
 await asyncio.gather(agent1.run(), agent2.run())
 ```
 
@@ -478,7 +538,7 @@ Returns engine status and version.
 | Tool execution | Hardware-dependent |
 | Event log write | < 1 ms (JSONL append) |
 | Memory footprint | ~50-100 MB (engine + tools) |
-| Agents per engine | 10+ (tested), scales based on quotas |
+| Concurrent agents | Designed for multi-agent support; tested with 3+ agents per engine |
 
 ---
 
@@ -559,5 +619,6 @@ If you use ANSE in research, please cite:
 
 ---
 
-**Status:** Active development | **Python:** 3.8+ | **License:** MIT  
-**Platform:** Windows, macOS, Linux | **Last Updated:** February 2026
+**Status:** Early-stage but stable — solid foundation, active development  
+**Python:** 3.8+ | **License:** MIT | **Platform:** Windows, macOS, Linux  
+**Last Updated:** February 2026
