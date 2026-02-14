@@ -1,0 +1,173 @@
+name: dashboard_bridge
+description: Safe, read-focused bridge between ANSE and the local web dashboard
+version: 1.0.0
+
+tools:
+  - name: get_camera_frame
+    description: Get a single camera frame as base64 JPEG
+    parameters: {}
+    returns:
+      type: string
+    sensitivity: public
+    rate_limit: 30
+
+  - name: get_audio_chunk
+    description: Get a short audio chunk (PCM samples or base64-encoded)
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_world_model_events
+    description: Get recent world model events
+    parameters:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 200
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_plugin_status
+    description: Get status of all loaded plugins
+    parameters: {}
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_reflex_status
+    description: Get all reflex rules and their state
+    parameters: {}
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_motor_status
+    description: Get current motor/servo state
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_memory_entries
+    description: Get long-term memory entries
+    parameters:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 200
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_reward_state
+    description: Get current reward state and history summary
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_body_schema
+    description: Get the robot body schema
+    parameters: {}
+    returns:
+      type: object
+    sensitivity: public
+    rate_limit: 20
+
+  - name: get_agent_messages
+    description: Get recent messages to/from the LLM
+    parameters:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 200
+    returns:
+      type: array
+    sensitivity: public
+    rate_limit: 20
+
+  - name: emergency_stop
+    description: Immediately stop all motors/actuators
+    parameters: {}
+    returns:
+      type: string
+    sensitivity: hardware
+    rate_limit: 5
+
+  - name: set_wheel_speed
+    description: Set wheel speeds (Operator Mode only in GUI)
+    parameters:
+      type: object
+      properties:
+        left_speed:
+          type: number
+        right_speed:
+          type: number
+      required: [left_speed, right_speed]
+    returns:
+      type: string
+    sensitivity: hardware
+    rate_limit: 10
+
+  - name: set_servo_angle
+    description: Set a servo angle (Operator Mode only in GUI)
+    parameters:
+      type: object
+      properties:
+        id:
+          type: integer
+        angle:
+          type: number
+      required: [id, angle]
+    returns:
+      type: string
+    sensitivity: hardware
+    rate_limit: 10
+
+  - name: toggle_reflex
+    description: Enable or disable a reflex rule
+    parameters:
+      type: object
+      properties:
+        reflex_id:
+          type: string
+        enabled:
+          type: boolean
+      required: [reflex_id, enabled]
+    returns:
+      type: string
+    sensitivity: system
+    rate_limit: 5
+
+  - name: delete_memory_entry
+    description: Delete a single memory entry by id
+    parameters:
+      type: object
+      properties:
+        memory_id:
+          type: string
+      required: [memory_id]
+    returns:
+      type: string
+    sensitivity: system
+    rate_limit: 5
+
+  - name: clear_memory
+    description: Clear all long-term memory entries
+    parameters: {}
+    returns:
+      type: string
+    sensitivity: system
+    rate_limit: 1
