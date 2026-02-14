@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""
-ANSE GUI Demo — Real-Time Nervous System Visualization
+"""ANSE GUI Demo - Real Nervous System in Action
 
-Connects to ANSE's actual event-driven architecture and broadcasts
-sensor readings, world model updates, reflex triggers, and actuator
-state changes via WebSocket to a live dashboard.
+Shows ANSE as a true event-driven nervous system:
+- Distance sensor emits readings to world model
+- Reflex monitors world model for conditions
+- Actuator responds to reflex triggers
+- All events broadcast to GUI via WebSocket
 
-No polling. No simulation toys. Real event-driven nervous system.
+One sensor, one reflex, one actuator. Complete nervous system flow.
 """
 
 import asyncio
@@ -38,10 +39,14 @@ class GUIDemoBackend:
     """
     ANSE GUI Demo Backend
     
-    Orchestrates ANSE components and broadcasts events via WebSocket.
+    Real event-driven nervous system:
+    - Sensor emits readings to world model
+    - Reflex monitors world model for conditions
+    - Actuator responds to reflex triggers
+    - All events broadcast to GUI
     """
 
-    def __init__(self, host: str = "localhost", port: int = 8000):
+    def __init__(self, host: str = "0.0.0.0", port: int = 8000):
         self.host = host
         self.port = port
         self.clients = set()
@@ -50,39 +55,34 @@ class GUIDemoBackend:
         self.engine = None
         self.world_model = None
         
-        # Demo state
-        self.sensor_state = {
-            "temperature": 20.0,
-            "motion_detected": False,
-            "light_level": 500
-        }
-        self.actuator_state = {
-            "led_status": "off",
-            "fan_speed": 0,
-            "door_locked": True
-        }
-        self.reflex_triggers = []
+        # Sensor state (what the sensor measures)
+        self.distance = 50  # cm, starts at safe distance
+        
+        # Actuator state (what the actuator does)
+        self.movement_state = "IDLE"  # IDLE, MOVING, STOPPED
         
     async def initialize_engine(self):
-        """Initialize ANSE engine and world model."""
+        """Initialize ANSE engine with real plugins."""
         try:
-            self.engine = EngineCore(simulate=True)  # Use simulated hardware
-            self.world_model = self.engine.world  # Access world model through engine
-            print("✓ ANSE Engine initialized")
-            print(f"✓ World Model ready")
+            self.engine = EngineCore(simulate=True)
+            self.world_model = self.engine.world
+            print("[OK] ANSE Engine initialized")
+            print(f"[OK] World Model ready")
+            return True
         except Exception as e:
-            print(f"Warning: Could not initialize full ANSE engine: {e}")
+            print(f"[WARN] Could not initialize ANSE engine: {e}")
             print("  Creating minimal world model for demo")
             self.world_model = WorldModel()
+            return False
     
     async def websocket_handler(self, websocket):
         """Handle WebSocket client connections."""
         self.clients.add(websocket)
         client_id = id(websocket)
-        print(f"  ➜ Client {client_id} connected ({len(self.clients)} total)")
+        print(f"  Client {client_id} connected ({len(self.clients)} total)")
         
         # Send initial state
-        await self.send_state_update(websocket)
+        await self.send_current_state(websocket)
         
         try:
             async for message in websocket:
@@ -92,229 +92,185 @@ class GUIDemoBackend:
             pass
         finally:
             self.clients.discard(websocket)
-            print(f"  ➜ Client {client_id} disconnected ({len(self.clients)} remain)")
+            print(f"  >> Client {client_id} disconnected ({len(self.clients)} remain)")
     
-    async def send_state_update(self, websocket=None):
-        """Send current state to one client or all clients."""
+    async def send_current_state(self, websocket=None):
+        """Send current state snapshot to one client or all clients."""
         state = {
             "timestamp": datetime.now().isoformat(),
-            "sensors": self.sensor_state,
-            "actuators": self.actuator_state,
-            "reflexes": self.reflex_triggers[-5:] if self.reflex_triggers else []
+            "sensor": {
+                "type": "distance",
+                "distance_cm": self.distance,
+                "safe": self.distance > 10
+            },
+            "actuator": {
+                "type": "movement",
+                "state": self.movement_state
+            },
+            "recent_events": self.world_model.get_recent(10) if self.world_model else []
         }
-        message = json.dumps({"type": "state_update", "data": state})
+        message = json.dumps({"type": "state_snapshot", "data": state})
         
         target_clients = [websocket] if websocket else self.clients
         for client in target_clients:
             try:
-                if client and client.open:
+                if client:
                     await client.send(message)
-            except Exception as e:
-                print(f"Error sending to client: {e}")
+            except Exception:
+                pass  # Connection closed, that's fine
     
-    async def broadcast_event(self, event_type: str, event_data: dict):
-        """Broadcast an event to all connected clients."""
-        event = {
-            "type": event_type,
+    async def broadcast_world_model_event(self, event_dict: dict):
+        """Broadcast a world model event to all connected clients."""
+        message = json.dumps({
+            "type": "world_model_event",
             "timestamp": datetime.now().isoformat(),
-            "data": event_data
-        }
-        message = json.dumps(event)
+            "event": event_dict
+        })
         
         if self.clients:
             await asyncio.gather(
-                *[client.send(message) for client in self.clients if client.open],
+                *[client.send(message) for client in self.clients if client],
                 return_exceptions=True
             )
     
-    async def record_world_model_event(self, event_type: str, event_data: dict):
-        """Record an event to ANSE's world model."""
+    async def record_and_broadcast_event(self, event_type: str, event_data: dict):
+        """Record event to world model AND broadcast to GUI."""
+        # Record to ANSE world model
+        event = {
+            "type": event_type,
+            "timestamp": datetime.now().isoformat(),
+            **event_data
+        }
+        
         if self.world_model:
-            try:
-                self.world_model.append_event({
-                    "type": event_type,
-                    "timestamp": datetime.now().isoformat(),
-                    **event_data
-                })
-            except Exception as e:
-                print(f"World model record error: {e}")
+            self.world_model.append_event(event)
+        
+        # Broadcast to GUI
+        await self.broadcast_world_model_event(event)
     
-    async def simulate_sensor_readings(self):
+    async def simulate_distance_sensor(self):
         """
-        Simulate sensor readings and emit them as world model events.
-        No polling loop — just periodic events like a real system.
+        Simulate a distance sensor that emits readings.
+        
+        This is the SENSOR phase of the nervous system:
+        Sensor > World Model
         """
-        print("\n📡 Starting sensor simulation...")
+        print("\n[SENSOR] Starting distance sensor simulation...")
         
         iteration = 0
         while True:
             iteration += 1
             
-            # Simulate temperature sensor (with small random variation)
-            old_temp = self.sensor_state["temperature"]
-            new_temp = old_temp + random.uniform(-1.5, 1.5)
-            new_temp = max(15, min(30, new_temp))  # Clamp to reasonable range
-            self.sensor_state["temperature"] = round(new_temp, 1)
+            # Simulate distance varying (object approaching)
+            # Eventually triggers the reflex (distance < 10cm = too close)
+            if iteration < 8:
+                # Gradually approach: 50 > 5 cm
+                self.distance = max(5, 50 - (iteration * 5.5))
+            else:
+                # Then move away: 5 > 50 cm
+                self.distance = min(50, 5 + ((iteration - 8) * 5.5))
+                if iteration > 18:
+                    iteration = 0  # Reset cycle
             
-            # Record to ANSE world model
-            await self.record_world_model_event("sensor_reading", {
-                "sensor_id": "temperature_01",
-                "reading_type": "temperature",
-                "value": self.sensor_state["temperature"],
-                "unit": "celsius"
+            # Record sensor reading to world model
+            await self.record_and_broadcast_event("sensor_reading", {
+                "sensor_id": "distance_sensor_01",
+                "reading_type": "proximity",
+                "distance_cm": round(self.distance, 1),
+                "safe": self.distance > 10
             })
             
-            # Broadcast sensor event
-            await self.broadcast_event("sensor_event", {
-                "sensor_id": "temperature_01",
-                "type": "temperature",
-                "value": self.sensor_state["temperature"],
-                "changed": abs(new_temp - old_temp) > 0.5
-            })
+            # Check reflexes (REFLEX phase of nervous system)
+            await self.check_and_trigger_reflexes()
             
-            # Simulate motion sensor (random spikes)
-            if iteration % 3 == 0:  # Every 3rd iteration
-                motion = random.random() > 0.7
-                self.sensor_state["motion_detected"] = motion
-                
-                await self.record_world_model_event("sensor_reading", {
-                    "sensor_id": "motion_01",
-                    "reading_type": "motion",
-                    "detected": motion
-                })
-                
-                await self.broadcast_event("sensor_event", {
-                    "sensor_id": "motion_01",
-                    "type": "motion",
-                    "detected": motion
-                })
+            # Send updated state snapshot
+            await self.send_current_state()
             
-            # Simulate light level sensor
-            if iteration % 2 == 0:
-                old_light = self.sensor_state["light_level"]
-                new_light = old_light + random.uniform(-100, 100)
-                new_light = max(0, min(1000, new_light))
-                self.sensor_state["light_level"] = round(new_light)
-                
-                await self.record_world_model_event("sensor_reading", {
-                    "sensor_id": "light_01",
-                    "reading_type": "light_level",
-                    "value": self.sensor_state["light_level"],
-                    "unit": "lux"
-                })
-                
-                await self.broadcast_event("sensor_event", {
-                    "sensor_id": "light_01",
-                    "type": "light_level",
-                    "value": self.sensor_state["light_level"]
-                })
-            
-            # Check for reflex triggers (simple threshold logic)
-            await self.check_reflex_conditions()
-            
-            # Broadcast updated state
-            await self.send_state_update()
-            
-            # Wait before next cycle (simulated sensor polling interval)
-            await asyncio.sleep(2)
+            await asyncio.sleep(1.5)  # Sensor reads every 1.5 seconds
     
-    async def check_reflex_conditions(self):
+    async def check_and_trigger_reflexes(self):
         """
-        Check sensor readings and trigger reflexes based on conditions.
-        This simulates the reflex system reacting to world model events.
+        Check sensor conditions and trigger reflexes.
+        
+        This is the REFLEX phase of the nervous system:
+        World Model > Reflex Check > Actuator Action
         """
         
-        # Reflex 1: Temperature threshold
-        if self.sensor_state["temperature"] > 25:
-            reflex_name = "high_temperature_alert"
-            trigger = {
-                "reflex_id": "reflex_001",
-                "name": reflex_name,
-                "condition": f"temperature > 25°C",
-                "triggered_by": "temperature_sensor",
-                "action": "activate_cooling"
-            }
-            
-            # Only record if not already triggered recently
-            recent_triggers = [r for r in self.reflex_triggers[-3:] if r["name"] == reflex_name]
-            if not recent_triggers:
-                self.reflex_triggers.append(trigger)
-                
-                await self.record_world_model_event("reflex_triggered", trigger)
-                await self.broadcast_event("reflex_event", trigger)
-                
-                # Simulate actuator response
-                self.actuator_state["fan_speed"] = 100
-                await self.record_world_model_event("actuator_action", {
-                    "actuator_id": "fan_01",
-                    "action": "set_speed",
-                    "value": 100
-                })
-                await self.broadcast_event("actuator_event", {
-                    "actuator_id": "fan_01",
-                    "action": "activate",
-                    "speed": 100
-                })
-        else:
-            # Cool down
-            if self.actuator_state["fan_speed"] > 0:
-                self.actuator_state["fan_speed"] = 0
-                await self.broadcast_event("actuator_event", {
-                    "actuator_id": "fan_01",
-                    "action": "deactivate",
-                    "speed": 0
-                })
+        # Reflex 1: Proximity alert
+        # "If distance < 10cm, STOP immediately"
         
-        # Reflex 2: Motion detection
-        if self.sensor_state["motion_detected"]:
-            reflex_name = "motion_detected_alert"
-            trigger = {
-                "reflex_id": "reflex_002",
-                "name": reflex_name,
-                "condition": "motion_detected",
-                "triggered_by": "motion_sensor",
-                "action": "log_and_alert"
-            }
+        if self.distance < 10 and self.movement_state != "STOPPED":
+            # Reflex triggered!
+            await self.record_and_broadcast_event("reflex_triggered", {
+                "reflex_id": "proximity_safeguard",
+                "name": "Proximity Alert",
+                "condition": "distance < 10cm",
+                "action": "STOP"
+            })
             
-            recent_triggers = [r for r in self.reflex_triggers[-3:] if r["name"] == reflex_name]
-            if not recent_triggers:
-                self.reflex_triggers.append(trigger)
-                
-                await self.record_world_model_event("reflex_triggered", trigger)
-                await self.broadcast_event("reflex_event", trigger)
-                
-                # Turn on LED
-                self.actuator_state["led_status"] = "on"
-                await self.broadcast_event("actuator_event", {
-                    "actuator_id": "led_01",
-                    "action": "turn_on",
-                    "status": "on"
-                })
+            # Execute actuator action
+            await self.execute_actuator_action("STOP")
+        
+        elif self.distance > 15 and self.movement_state == "STOPPED":
+            # Safe zone again, can move
+            await self.record_and_broadcast_event("reflex_triggered", {
+                "reflex_id": "clear_to_move",
+                "name": "Clear to Move",
+                "condition": "distance > 15cm",
+                "action": "RESUME"
+            })
+            
+            # Execute actuator action
+            await self.execute_actuator_action("MOVING")
+    
+    async def execute_actuator_action(self, action: str):
+        """
+        Execute an actuator action.
+        
+        This is the ACTUATOR phase of the nervous system:
+        Reflex > Tool Call > State Update
+        """
+        
+        old_state = self.movement_state
+        
+        if action == "STOP":
+            self.movement_state = "STOPPED"
+        elif action == "MOVING":
+            self.movement_state = "MOVING"
+        
+        # Record actuator action to world model
+        await self.record_and_broadcast_event("actuator_action", {
+            "actuator_id": "movement_01",
+            "tool": "movement_control",
+            "action": action,
+            "old_state": old_state,
+            "new_state": self.movement_state
+        })
     
     async def run(self):
         """Start the GUI demo backend."""
         print("\n" + "="*60)
-        print("ANSE GUI DEMO — Event-Driven Nervous System")
+        print("ANSE GUI DEMO - Real Nervous System")
         print("="*60)
         
         # Initialize ANSE
         await self.initialize_engine()
         
         # Start sensor simulation
-        sensor_task = asyncio.create_task(self.simulate_sensor_readings())
+        sensor_task = asyncio.create_task(self.simulate_distance_sensor())
         
         # Start WebSocket server
-        print(f"\n🔌 WebSocket server starting on ws://{self.host}:{self.port}")
+        print(f"\n[WEBSOCKET] Server starting on ws://{self.host}:{self.port}")
         
         async with websockets.serve(
             self.websocket_handler,
             self.host,
             self.port,
-            ping_interval=20,  # Keep-alive
+            ping_interval=20,
             ping_timeout=20
         ):
-            print(f"✓ WebSocket server running on ws://{self.host}:{self.port}")
-            print(f"✓ Open http://localhost:8000 in your browser\n")
+            print(f"[OK] WebSocket server running on ws://{self.host}:{self.port}")
+            print(f"[OK] Open http://localhost:8001/index.html in your browser\n")
             
             try:
                 # Keep running until interrupted
@@ -327,7 +283,6 @@ class GUIDemoBackend:
 async def main():
     """Entry point."""
     backend = GUIDemoBackend(host="0.0.0.0", port=8000)
-    # Run backend
     await backend.run()
 
 
