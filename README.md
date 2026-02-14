@@ -101,6 +101,12 @@ See [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for implementation 
 
 ---
 
+## The Nervous System Model
+
+ANSE implements an event-driven nervous system where sensors emit events, reflexes react instantly, agents make decisions based on the world model, and all actions are audited. No polling loops. No continuous checks. All behavior flows through the immutable world model event log.
+
+---
+
 ## Plugin System (Extensible & Powerful)
 
 ANSE's **plugin system is the core extensibility story** — add custom sensors without modifying the engine:
@@ -433,10 +439,15 @@ tests/
 ├── test_operator_ui.py
 └── ...
 docs/
-├── API.md                  # API reference
-├── DESIGN.md               # Architecture guide
-├── PLUGINS.md              # Plugin development
-└── QUICKSTART.md           # Getting started
+├── API.md                          # API reference
+├── DESIGN.md                       # Architecture guide
+├── EVENT_DRIVEN_ARCHITECTURE.md    # Nervous system model (event-driven patterns)
+├── EVENT_DRIVEN_CHEATSHEET.md      # Quick reference and common operations
+├── IMPLEMENTATION_CHECKLIST.md     # Step-by-step guide for implementing systems
+├── MIGRATION_POLLING_TO_EVENTS.md  # Conversion guide from polling to events
+├── PLUGINS.md                      # Plugin development
+├── QUICKSTART.md                   # Getting started
+└── TROUBLESHOOTING_EVENT_DRIVEN.md # Common issues and solutions
 ```
 
 ---
@@ -581,6 +592,11 @@ See [docs/API.md](docs/API.md) for complete examples.
 ## Documentation
 
 - **[Quick Start Guide](docs/QUICKSTART.md)** — Hands-on tutorial
+- **[Event-Driven Cheat Sheet](docs/EVENT_DRIVEN_CHEATSHEET.md)** — Quick reference for patterns and commands
+- **[Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md)** — How ANSE works as a nervous system (event-driven, not polling)
+- **[Migration from Polling to Events](docs/MIGRATION_POLLING_TO_EVENTS.md)** — Practical guide for converting existing code
+- **[Implementation Checklist](docs/IMPLEMENTATION_CHECKLIST.md)** — Step-by-step guide for building event-driven systems
+- **[Troubleshooting Event-Driven Issues](docs/TROUBLESHOOTING_EVENT_DRIVEN.md)** — Common problems and solutions
 - **[Architecture & Design](docs/DESIGN.md)** — Deep dive into ANSE internals
 - **[API Reference](docs/API.md)** — Complete tool and method documentation
 - **[Plugin Development](docs/PLUGINS.md)** — Building custom sensors and tools

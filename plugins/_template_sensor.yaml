@@ -4,9 +4,15 @@
 # Rename to: my_sensor_name.yaml
 #
 # For Python-based plugins, see: _template_sensor.py
+#
+# IMPORTANT: ANSE is EVENT-DRIVEN, not polling-based
+# - Plugins should emit events when sensor readings change
+# - Tools are called ON-DEMAND, not continuously
+# - Never create polling loops (while True, setInterval, etc.)
+# - See: docs/EVENT_DRIVEN_ARCHITECTURE.md
 
 name: example_thermometer
-description: Simulated temperature sensor that returns random values
+description: Temperature sensor that emits world model events for readings (no polling)
 
 # Sensitivity level: low, medium, high
 # low:    Read-only, no impact on world state
@@ -15,11 +21,24 @@ description: Simulated temperature sensor that returns random values
 sensitivity: low
 
 # Rate limiting: calls per minute (0 = unlimited)
+# Note: Sensors called on-demand, not continuously, so this is conservative
 rate_limit: 60
 
 # Author information (optional)
 author: Your Name
 version: "1.0.0"
+
+# Event Emission (Optional)
+# If you want to emit events to the world model when sensor readings change,
+# do so in your Python plugin using:
+#   await engine.world_model.record({
+#       "type": "sensor_reading",
+#       "sensor": "my_sensor",
+#       "value": {...},
+#       "timestamp": time.time()
+#   })
+#
+# Reflexes will react to these events automatically (no polling needed).
 
 tools:
   # First tool: Return current temperature

@@ -386,6 +386,7 @@
       <!-- Detected Devices -->
       <div class="panel">
         <h2>📱 Detected Devices</h2>
+        <button onclick="scanDevices()" style="margin-bottom: 12px; padding: 6px 12px; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">Scan Devices</button>
         <ul class="list" id="devices-list">
           <li class="list-item">Scanning...</li>
         </ul>
@@ -402,6 +403,7 @@
       <!-- Detected Sensors -->
       <div class="panel">
         <h2>📊 Detected Sensors <span class="badge" id="sensor-count">0</span></h2>
+        <button onclick="refreshBody()" style="margin-bottom: 12px; padding: 6px 12px; background: #8b5cf6; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">Query Body</button>
         <div class="sensor-grid" id="sensors-grid">
           <div class="sensor-card">Scanning...</div>
         </div>
@@ -418,6 +420,7 @@
       <!-- Reflex Rules -->
       <div class="panel">
         <h2>⚡ Reflex Rules <span class="badge" id="reflex-count">0</span></h2>
+        <button onclick="refreshReflexes()" style="margin-bottom: 12px; padding: 6px 12px; background: #ec4899; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">Query Reflexes</button>
         <div id="reflexes-container">
           <div class="list-item info">No reflexes configured</div>
         </div>
@@ -494,14 +497,20 @@
       ws.onopen = () => {
         setStatus(true);
         console.log("Connected to ANSE");
+        // Server pushes world model events - no polling needed
         loadAllData();
-        // Refresh every 2 seconds
-        setInterval(loadAllData, 2000);
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          
+          // Handle server-pushed world model events (event-driven)
+          if (msg.type === "world_model_update") {
+            updateWorldModel(msg.events || []);
+          }
+          
+          // Handle JSON-RPC request/response
           if (msg.id && pending.has(msg.id)) {
             const { resolve } = pending.get(msg.id);
             pending.delete(msg.id);
@@ -556,24 +565,79 @@
 
     async function loadAllData() {
       try {
-        const [plugins, body, reflexes, memory, reward, worldModel] = await Promise.all([
-          call("get_plugin_status"),
-          call("get_body_schema"),
-          call("get_reflex_status"),
+        // Only auto-update software state (events, memory, rewards)
+        // Hardware queries are on-demand via buttons
+        const [memory, reward, worldModel] = await Promise.all([
           call("get_memory_entries", { limit: 50 }),
           call("get_reward_state"),
           call("get_world_model_events", { limit: 50 })
         ]);
 
-        updatePlugins(plugins || []);
-        updateBodySchema(body || {});
-        updateReflexes(reflexes || []);
         updateMemory(memory || []);
         updateReward(reward || {});
         updateWorldModel(worldModel || []);
       } catch (e) {
         console.error("Failed to load data:", e);
       }
+    }
+
+    async function refreshBody() {
+      try {
+        const body = await call("get_body_schema");
+        updateBodySchema(body || {});
+      } catch (e) {
+        console.error("Failed to refresh body schema:", e);
+      }
+    }
+
+    async function refreshReflexes() {
+      try {
+        const reflexes = await call("get_reflex_status");
+        updateReflexes(reflexes || []);
+      } catch (e) {
+        console.error("Failed to refresh reflexes:", e);
+      }
+    }
+
+    async function scanDevices() {
+      try {
+        const devices = await call("get_detected_devices");
+        updateDevices(devices || {});
+      } catch (e) {
+        console.error("Failed to scan devices:", e);
+      }
+    }
+
+    function updateDevices(devices) {
+      const list = document.getElementById("devices-list");
+      
+      let html = "";
+      
+      // Cameras
+      const cameras = devices.cameras || [];
+      if (cameras.length > 0) {
+        html += `<li class="list-item"><strong>📷 Cameras: ${cameras.length}</strong></li>`;
+        cameras.forEach(cam => {
+          html += `<li class="list-item" style="margin-left: 20px; border-left-color: #60a5fa;">` +
+            `${cam.name} (${cam.resolution})</li>`;
+        });
+      }
+      
+      // Microphones
+      const mics = devices.microphones || [];
+      if (mics.length > 0) {
+        html += `<li class="list-item"><strong>🎤 Microphones: ${mics.length}</strong></li>`;
+        mics.forEach(mic => {
+          html += `<li class="list-item" style="margin-left: 20px; border-left-color: #f87171;">` +
+            `${mic.name} (${mic.channels} ch)</li>`;
+        });
+      }
+      
+      if (html === "") {
+        html = '<li class="list-item">No devices detected</li>';
+      }
+      
+      list.innerHTML = html;
     }
 
     function updatePlugins(plugins) {
@@ -774,8 +838,14 @@
     // Start connection on load
     window.addEventListener("load", () => {
       connect();
-      // Load camera on startup
-      setTimeout(refreshCamera, 1000);
+      // Load hardware once on startup, then auto-update software state
+      setTimeout(() => {
+        refreshCamera();
+        scanDevices();
+        refreshBody();
+        refreshReflexes();
+        // Server will push world model events automatically
+      }, 1000);
     });
   </script>
 </body>

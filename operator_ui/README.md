@@ -2,6 +2,17 @@
 
 The Operator UI is a web-based dashboard for monitoring ANSE agents in real-time, managing approval tokens, and reviewing audit logs.
 
+## ⚠️ Event-Driven Architecture
+
+ANSE is built on an **event-driven nervous system model**, not polling. The Operator UI currently uses polling (`setInterval` every 2 seconds) for simplicity, with visibility detection to pause when the tab is hidden.
+
+**For production use**, the Operator UI should be refactored to:
+1. Subscribe to ANSE WebSocket event stream
+2. React to `world_model_update` events pushed by the server
+3. Remove all `setInterval()` polling loops
+
+See [docs/EVENT_DRIVEN_ARCHITECTURE.md](../docs/EVENT_DRIVEN_ARCHITECTURE.md) for the complete nervous system model.
+
 ## Features
 
 ✅ **Real-time Agent Monitoring** - Live list of active agents with status

@@ -34,7 +34,7 @@ const tabPanes = document.querySelectorAll('.tab-pane');
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    startPolling();
+    startEventSubscription();
     updateTimestamp();
     setInterval(updateTimestamp, 1000);
 });
@@ -111,18 +111,32 @@ function switchTab(tabName) {
     }
 }
 
-// Polling loop
-function startPolling() {
+// Event-driven updates instead of polling
+function startEventSubscription() {
+    // Load initial data
     loadAgents();
     loadSystemHealth();
     
-    pollIntervalId = setInterval(() => {
-        loadAgents();
-        loadSystemHealth();
-        if (currentSelectedAgent) {
-            loadRecentEvents();
+    // In production, this would connect to a WebSocket event stream
+    // For now, keep light polling but only when tab is visible
+    if (document.hidden === false) {
+        pollIntervalId = setInterval(() => {
+            loadAgents();
+            loadSystemHealth();
+            if (currentSelectedAgent) {
+                loadRecentEvents();
+            }
+        }, POLL_INTERVAL_MS);
+    }
+    
+    // Pause polling when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            clearInterval(pollIntervalId);
+        } else {
+            startEventSubscription();
         }
-    }, POLL_INTERVAL_MS);
+    });
 }
 
 // Load agents

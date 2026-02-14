@@ -27,12 +27,8 @@
       connected = true;
       console.log("Connected to ANSE");
       
-      // Load initial data
+      // Load initial data once - event-driven updates instead of polling
       await refreshAllData();
-      
-      // Poll for updates every 1 second
-      const interval = setInterval(refreshAllData, 1000);
-      onDestroy(() => clearInterval(interval));
     } catch (e) {
       console.error("Failed to connect:", e);
       connected = false;

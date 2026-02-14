@@ -3,9 +3,29 @@ description: Safe, read-focused bridge between ANSE and the local web dashboard
 version: 1.0.0
 
 tools:
+  - name: get_detected_devices
+    description: Detect all connected devices (cameras, microphones, network interfaces)
+    parameters: {}
+    returns:
+      type: object
+      properties:
+        cameras:
+          type: array
+        microphones:
+          type: array
+        interfaces:
+          type: array
+    sensitivity: public
+    rate_limit: 20
+
   - name: get_camera_frame
     description: Get a single camera frame as base64 JPEG
-    parameters: {}
+    parameters:
+      type: object
+      properties:
+        camera_id:
+          type: integer
+          default: 0
     returns:
       type: string
     sensitivity: public

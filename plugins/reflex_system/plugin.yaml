@@ -1,5 +1,5 @@
 name: reflex_system
-description: Fast, non-LLM reflex actions triggered by sensor thresholds
+description: Fast, event-driven reflex actions triggered by world model sensor events (no polling)
 version: 1.0.0
 
 tools:
@@ -57,7 +57,7 @@ tools:
     rate_limit: 5
 
   - name: enable_background_monitoring
-    description: Start background monitoring loop
+    description: Register reflex system to listen to world model events
     parameters: {}
     returns:
       type: object

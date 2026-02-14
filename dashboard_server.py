@@ -161,6 +161,37 @@ class ANSEDashboardServer:
                 "id": req_id
             }
 
+    async def broadcast_world_model_events(self):
+        """Broadcast world model events to all connected clients every 3 seconds."""
+        while True:
+            try:
+                await asyncio.sleep(3)
+                
+                # Get current world model events
+                events = await self.plugins["dashboard_bridge"].get_world_model_events(limit=10)
+                
+                # Broadcast to all connected clients
+                if self.clients and events:
+                    message = json.dumps({
+                        "type": "world_model_update",
+                        "events": events
+                    })
+                    
+                    # Send to all connected clients
+                    disconnected = set()
+                    for client in self.clients:
+                        try:
+                            await client.send(message)
+                        except Exception as e:
+                            logger.warning(f"Failed to send to client: {e}")
+                            disconnected.add(client)
+                    
+                    # Clean up disconnected clients
+                    self.clients -= disconnected
+            except Exception as e:
+                logger.error(f"Error in broadcast loop: {e}")
+                await asyncio.sleep(1)
+
     async def start(self):
         """Start WebSocket server."""
         logger.info(f"Starting WebSocket server on ws://{self.host}:{self.port}")
@@ -170,10 +201,15 @@ class ANSEDashboardServer:
             logger.info(f"✅ Dashboard server running at ws://{self.host}:{self.port}")
             logger.info(f"📊 Open dashboard.html in your browser")
             
+            # Start background event broadcast
+            broadcast_task = asyncio.create_task(self.broadcast_world_model_events())
+            
             try:
                 await asyncio.Future()  # Run forever
             except KeyboardInterrupt:
                 logger.info("Shutting down...")
+            finally:
+                broadcast_task.cancel()
 
 
 async def main():

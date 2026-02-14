@@ -6,6 +6,7 @@ Provides whitelisted access to plugin state and safe control operations.
 """
 
 import logging
+import base64
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -24,6 +25,7 @@ class DashboardBridgePlugin:
         self.plugins_ref = {}  # Will be populated by engine
         self.engine = None  # Will be populated by engine
         self.world_model = None  # Will be populated by engine
+        self._last_frame_cache = None
 
     def set_engine_reference(self, engine: Any) -> None:
         """Allow engine to register itself."""
@@ -35,12 +37,105 @@ class DashboardBridgePlugin:
         """Allow engine to register available plugins."""
         self.plugins_ref = plugins_dict
 
-    async def get_camera_frame(self) -> str:
+    async def get_detected_devices(self) -> Dict[str, Any]:
+        """Detect all connected devices (cameras, microphones, etc.)."""
+        devices = {
+            "cameras": [],
+            "microphones": [],
+            "interfaces": []
+        }
+        
+        try:
+            # Detect cameras
+            import cv2
+            for i in range(10):
+                try:
+                    cap = cv2.VideoCapture(i)
+                    if cap.isOpened():
+                        ret, frame = cap.read()
+                        if ret:
+                            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                            devices["cameras"].append({
+                                "id": i,
+                                "name": f"Camera {i}",
+                                "resolution": f"{w}x{h}",
+                                "available": True
+                            })
+                        cap.release()
+                except:
+                    pass
+        except Exception as e:
+            logger.warning(f"[DASHBOARD_BRIDGE] Camera detection failed: {e}")
+        
+        try:
+            # Detect microphones
+            import sounddevice as sd
+            try:
+                devices_list = sd.query_devices()
+                if isinstance(devices_list, list):
+                    for i, device in enumerate(devices_list):
+                        if device.get('max_input_channels', 0) > 0:
+                            devices["microphones"].append({
+                                "id": i,
+                                "name": device.get('name', f'Microphone {i}'),
+                                "channels": device.get('max_input_channels', 0),
+                                "available": True
+                            })
+                else:
+                    # Single device returned
+                    if devices_list.get('max_input_channels', 0) > 0:
+                        devices["microphones"].append({
+                            "id": 0,
+                            "name": devices_list.get('name', 'Microphone'),
+                            "channels": devices_list.get('max_input_channels', 0),
+                            "available": True
+                        })
+            except:
+                pass
+        except Exception as e:
+            logger.warning(f"[DASHBOARD_BRIDGE] Microphone detection failed: {e}")
+        
+        logger.info(f"[DASHBOARD_BRIDGE] Detected devices: {len(devices['cameras'])} cameras, {len(devices['microphones'])} microphones")
+        return devices
+
+    async def get_camera_frame(self, camera_id: int = 0) -> str:
         """Get the current camera frame as base64 JPEG."""
         try:
-            # Call camera tool if available
-            frame = await self._call_engine_tool("capture_frame")
-            return frame or ""
+            import cv2
+            
+            cap = cv2.VideoCapture(camera_id)
+            if not cap.isOpened():
+                logger.warning(f"[DASHBOARD_BRIDGE] Camera {camera_id} not available")
+                return ""
+            
+            ret, frame = cap.read()
+            cap.release()
+            
+            if not ret or frame is None:
+                logger.warning(f"[DASHBOARD_BRIDGE] Failed to capture frame from camera {camera_id}")
+                return ""
+            
+            # Encode frame as JPEG
+            success, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            
+            if not success:
+                logger.warning(f"[DASHBOARD_BRIDGE] Failed to encode frame as JPEG")
+                return ""
+            
+            # Convert to base64
+            frame_bytes = buffer.tobytes()
+            frame_b64 = base64.b64encode(frame_bytes).decode('utf-8')
+            
+            # Cache the frame
+            self._last_frame_cache = frame_b64
+            
+            logger.debug(f"[DASHBOARD_BRIDGE] Captured frame from camera {camera_id}")
+            return frame_b64
+            
+        except ImportError:
+            logger.error(f"[DASHBOARD_BRIDGE] OpenCV not installed")
+            return ""
         except Exception as e:
             logger.error(f"[DASHBOARD_BRIDGE] get_camera_frame failed: {e}")
             return ""

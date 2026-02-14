@@ -304,28 +304,35 @@ async def vision_agent():
         call = {..., "tool": "say", "args": {"text": description}}
 ```
 
-### Voice Assistant
+### Voice Assistant (Event-Driven)
 
 ```python
-# Agent that listens and responds
+# Agent that listens to audio events and responds
 async def voice_assistant():
-    while True:
-        # Record audio
-        # Transcribe audio (with Whisper)
-        # Process command
-        # Speak response
+    async with websockets.connect("ws://127.0.0.1:8765") as ws:
+        async for message in ws:
+            event = json.loads(message)
+            if event.get("event_type") == "audio_detected":
+                # Transcribe audio (with Whisper)
+                # Process command
+                # Speak response
 ```
 
-### Monitoring Agent
+### Monitoring Agent (Event-Driven)
 
 ```python
-# Agent that periodically checks environment
+# Agent that reacts to sensor events instead of polling
 async def monitor():
-    while True:
-        # Capture frame every 5 seconds
-        # Detect anomalies
-        # Alert via speech if needed
-        await asyncio.sleep(5)
+    async with websockets.connect("ws://127.0.0.1:8765") as ws:
+        async for message in ws:
+            event = json.loads(message)
+            # React to sensor events as they occur
+            if event.get("type") == "sensor_reading":
+                value = event.get("value")
+                # Detect anomalies
+                # Alert via speech if needed
+                if value > THRESHOLD:
+                    await ws.send(json.dumps({...}))
 ```
 
 ---

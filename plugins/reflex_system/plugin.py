@@ -124,46 +124,47 @@ class ReflexSystemPlugin:
             "message": "Background monitoring enabled"
         }
 
-    async def _monitor_reflexes(self, engine) -> None:
+    async def process_world_model_event(self, event: Dict[str, Any], engine: Any) -> None:
         """
-        Background monitoring loop (called by engine, not directly).
+        React to world model events and trigger reflexes if thresholds are crossed.
+        This is event-driven, not polling-based.
 
         Args:
+            event: World model event
             engine: Reference to ANSE engine for tool calling
         """
-        while self.monitoring:
-            try:
-                for reflex_id, reflex in self.reflexes.items():
-                    # Get current sensor value
+        if not self.monitoring:
+            return
+        
+        try:
+            # Extract sensor reading from event if available
+            sensor_name = event.get("sensor_name")
+            sensor_value = event.get("value")
+            
+            if sensor_name is None or sensor_value is None:
+                return
+            
+            # Check all reflexes for this sensor
+            for reflex_id, reflex in self.reflexes.items():
+                if reflex["sensor_name"] != sensor_name:
+                    continue
+                
+                # Check threshold
+                triggered = False
+                if reflex["comparison"] == "greater_than":
+                    triggered = sensor_value > reflex["threshold"]
+                elif reflex["comparison"] == "less_than":
+                    triggered = sensor_value < reflex["threshold"]
+                elif reflex["comparison"] == "equal_to":
+                    triggered = abs(sensor_value - reflex["threshold"]) < 0.01
+                
+                # Trigger action if threshold crossed
+                if triggered:
+                    logger.info(f"[REFLEX] Triggered {reflex_id}: {reflex['action_tool']}({reflex['action_args']})")
                     try:
-                        sensor_result = await engine.tools.call(reflex["sensor_name"], {})
-                        if isinstance(sensor_result, dict):
-                            sensor_value = sensor_result.get("value", 0)
-                        else:
-                            sensor_value = float(sensor_result)
+                        await engine.tools.call(reflex["action_tool"], reflex["action_args"])
+                        reflex["triggered_count"] += 1
                     except Exception as e:
-                        logger.warning(f"[REFLEX] Failed to read sensor {reflex['sensor_name']}: {e}")
-                        continue
-
-                    # Check threshold
-                    triggered = False
-                    if reflex["comparison"] == "greater_than":
-                        triggered = sensor_value > reflex["threshold"]
-                    elif reflex["comparison"] == "less_than":
-                        triggered = sensor_value < reflex["threshold"]
-                    elif reflex["comparison"] == "equal_to":
-                        triggered = abs(sensor_value - reflex["threshold"]) < 0.01
-
-                    # Trigger action if threshold crossed
-                    if triggered:
-                        logger.info(f"[REFLEX] Triggered {reflex_id}: {reflex['action_tool']}({reflex['action_args']})")
-                        try:
-                            await engine.tools.call(reflex["action_tool"], reflex["action_args"])
-                            reflex["triggered_count"] += 1
-                        except Exception as e:
-                            logger.error(f"[REFLEX] Failed to execute action {reflex['action_tool']}: {e}")
-
-                await asyncio.sleep(0.1)  # Monitor every 100ms
-            except Exception as e:
-                logger.error(f"[REFLEX] Monitor loop error: {e}")
-                await asyncio.sleep(1)
+                        logger.error(f"[REFLEX] Failed to execute action {reflex['action_tool']}: {e}")
+        except Exception as e:
+            logger.error(f"[REFLEX] Event processing error: {e}")
