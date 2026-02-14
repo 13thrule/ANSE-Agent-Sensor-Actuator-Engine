@@ -198,6 +198,49 @@ All 5 phases complete in ~150ms, fully event-driven, zero polling.
 └─────────────────────────────────────────────────┘
 ```
 
+### Run a Demo Agent (5 minutes)
+
+**Terminal 3 — Run a Python agent that connects to the backend:**
+```bash
+python demo_agent.py
+```
+
+**What happens:**
+1. Agent connects to `ws://localhost:8001`
+2. Receives live **sensor events** (distance readings)
+3. Observes **reflex triggers** (safety rules firing)
+4. Watches **world model updates** (brain state)
+5. Sends a safe **actuator command** to move the robot
+6. Sees the response: motor state changes to MOVING
+
+**Example output:**
+```
+✓ Connected to ws://localhost:8001
+
+📤 Sending hello...
+
+📥 Event #1 (worldmodel):
+{
+  "type": "worldmodel",
+  "data": {
+    "distance_cm": 5.0,
+    "safe": false,
+    "actuator_state": "STOPPED"
+  }
+}
+
+📤 Sending actuator command: move_forward(distance_m=0.1)
+
+📥 Event #8 (actuator):
+{
+  "type": "actuator",
+  "actuator_name": "movement",
+  "state": "MOVING"  ← Robot responds to agent command
+}
+```
+
+This is **the whole point** — agents connect via WebSocket, read the world, and tell the body what to do.
+
 ---
 
 ## 🧠 How External Agents Connect (The Whole Point)
