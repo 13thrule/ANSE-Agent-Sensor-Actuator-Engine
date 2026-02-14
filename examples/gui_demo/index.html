@@ -196,6 +196,54 @@
             font-size: 1.1em;
         }
 
+        .state-change {
+            animation: pulse-state 0.5s ease-out;
+            background: rgba(0, 255, 170, 0.1) !important;
+        }
+
+        @keyframes pulse-state {
+            0% {
+                background: rgba(0, 255, 170, 0.3);
+                transform: scale(1.02);
+            }
+            50% {
+                background: rgba(0, 255, 170, 0.1);
+            }
+            100% {
+                background: rgba(0, 217, 255, 0.05);
+            }
+        }
+
+        .state-history {
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0, 217, 255, 0.03);
+            border-radius: 4px;
+            border-left: 2px solid #0066ff;
+        }
+
+        .history-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .history-items {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .history-item {
+            font-size: 0.75em;
+            color: #888;
+            padding: 2px 4px;
+            background: rgba(0, 217, 255, 0.05);
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
         .log-panel {
             grid-column: 1 / -1;
         }
@@ -344,6 +392,11 @@
         let ws = null;
         let eventCount = 0;
         let isConnected = false;
+        
+        // Track world model history and state changes
+        let worldModelHistory = [];
+        let lastDistance = null;
+        let lastActuatorState = null;
 
         function updateConnectionStatus(connected) {
             isConnected = connected;
@@ -427,32 +480,81 @@
             
             // Handle world model updates (brain snapshot)
             if (type === 'world_model_update') {
-                const worldModel = data.world_model;
+                const worldModel = data;  // data IS the world model
                 const worldModelPanel = document.getElementById('worldmodel-panel');
                 
-                const timestamp = data.timestamp;
                 const timeStr = timestamp.substring(11, 19);  // HH:MM:SS
+                
+                // Calculate distance trend
+                let trendIcon = '→';
+                let trendColor = '#888';
+                if (lastDistance !== null) {
+                    if (worldModel.distance_cm < lastDistance) {
+                        trendIcon = '↗ CLOSER';
+                        trendColor = '#ff6600';
+                    } else if (worldModel.distance_cm > lastDistance) {
+                        trendIcon = '↘ FARTHER';
+                        trendColor = '#0088ff';
+                    }
+                }
+                lastDistance = worldModel.distance_cm;
+                
+                // Track state history
+                worldModelHistory.unshift({
+                    distance: worldModel.distance_cm,
+                    state: worldModel.actuator_state,
+                    time: timeStr
+                });
+                // Keep last 5
+                worldModelHistory = worldModelHistory.slice(0, 5);
+                
+                // Build history HTML
+                let historyHTML = '';
+                if (worldModelHistory.length > 1) {
+                    historyHTML = `
+                        <div class="state-history">
+                            <div class="history-label">State History:</div>
+                            <div class="history-items">
+                                ${worldModelHistory.slice(1).map((h, i) => `
+                                    <div class="history-item" style="opacity: ${1 - (i * 0.15)}">
+                                        ${h.state} @ ${h.distance}cm
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Determine safety color
+                const safeColor = worldModel.safe ? '#00ff00' : '#ff3333';
+                const safeStatus = worldModel.safe ? '✓ SAFE' : '⚠️ DANGER';
+                
+                // Build the state display with animation class
+                const stateAnimClass = lastActuatorState && lastActuatorState !== worldModel.actuator_state ? 'state-change' : '';
+                lastActuatorState = worldModel.actuator_state;
                 
                 worldModelPanel.innerHTML = `
                     <div class="world-model-state">
                         <div class="state-row">
                             <span class="state-label">Distance:</span>
                             <span class="state-value">${worldModel.distance_cm} cm</span>
+                            <span style="color: ${trendColor}; font-size: 0.9em; margin-left: 8px;">${trendIcon}</span>
                         </div>
                         <div class="state-row">
-                            <span class="state-label">Safe:</span>
-                            <span class="state-value" style="color: ${worldModel.safe ? '#00ff00' : '#ff6600'};">
-                                ${worldModel.safe ? '✓ YES' : '✗ NO'}
+                            <span class="state-label">Safety:</span>
+                            <span class="state-value" style="color: ${safeColor};">
+                                ${safeStatus}
                             </span>
                         </div>
-                        <div class="state-row">
-                            <span class="state-label">Actuator State:</span>
+                        <div class="state-row ${stateAnimClass}">
+                            <span class="state-label">Actuator:</span>
                             <span class="state-value">${worldModel.actuator_state}</span>
                         </div>
                         <div class="state-row">
                             <span class="state-label">Last Reflex:</span>
                             <span class="state-value">${worldModel.last_reflex}</span>
                         </div>
+                        ${historyHTML}
                         <div class="state-row" style="border-top: 1px solid #333; padding-top: 8px; margin-top: 8px; font-size: 0.85em; color: #888;">
                             <span class="state-label">Updated:</span>
                             <span class="state-value">${timeStr}</span>
