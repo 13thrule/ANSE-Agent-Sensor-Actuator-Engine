@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANSE GUI Demo — Event-Driven Nervous System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00d9ff;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #00d9ff;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1em;
+            color: #888;
+            font-weight: 300;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 1s infinite;
+        }
+
+        .status-indicator.active {
+            background: #00ffaa;
+            animation: pulse-green 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: rgba(20, 25, 50, 0.8);
+            border: 1px solid #00d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h2 {
+            color: #00d9ff;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            font-size: 1.5em;
+        }
+
+        .sensor-reading {
+            background: rgba(0, 217, 255, 0.05);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid #00d9ff;
+            border-radius: 4px;
+        }
+
+        .sensor-reading .label {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-bottom: 3px;
+        }
+
+        .sensor-reading .value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #00ffaa;
+            font-family: 'Courier New', monospace;
+        }
+
+        .event-item {
+            background: rgba(0, 150, 255, 0.08);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #0096ff;
+            font-size: 0.9em;
+        }
+
+        .event-item.reflex {
+            border-left-color: #ff6b00;
+            background: rgba(255, 107, 0, 0.08);
+        }
+
+        .event-item.actuator {
+            border-left-color: #00ffaa;
+            background: rgba(0, 255, 170, 0.08);
+        }
+
+        .event-time {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .event-type {
+            color: #00d9ff;
+            font-weight: 600;
+        }
+
+        .event-details {
+            color: #aaa;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
+        .log-panel {
+            grid-column: 1 / -1;
+        }
+
+        .timeline {
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            margin-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .timeline-event {
+            height: 30px;
+            min-width: 4px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timeline-event:hover {
+            height: 40px;
+        }
+
+        .timeline-event.sensor {
+            background: #00d9ff;
+        }
+
+        .timeline-event.reflex {
+            background: #ff6b00;
+        }
+
+        .timeline-event.actuator {
+            background: #00ffaa;
+        }
+
+        .empty-state {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .connection-status {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .connection-status.connected {
+            background: rgba(0, 255, 170, 0.1);
+            color: #00ffaa;
+            border: 1px solid #00ffaa;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .log-panel {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 ANSE GUI Demo</h1>
+            <p class="subtitle">Event-Driven Nervous System Visualization</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-indicator" id="connection-indicator"></span>
+                    <span id="connection-status">Connecting...</span>
+                </div>
+                <div class="status-item">
+                    Events: <span id="event-count" style="color: #00ffaa; font-weight: 600;">0</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="connection-message" class="connection-status disconnected">
+            Waiting for connection...
+        </div>
+
+        <div class="grid">
+            <!-- Sensor Input Panel -->
+            <div class="panel">
+                <h2><span class="panel-icon">📡</span> Sensor Input</h2>
+                <div id="sensors-panel">
+                    <div class="empty-state">Waiting for sensor readings...</div>
+                </div>
+            </div>
+
+            <!-- World Model Panel -->
+            <div class="panel">
+                <h2><span class="panel-icon">🌍</span> World Model</h2>
+                <div id="worldmodel-panel">
+                    <div class="empty-state">Waiting for world model updates...</div>
+                </div>
+            </div>
+
+            <!-- Reflexes Panel -->
+            <div class="panel">
+                <h2><span class="panel-icon">⚡</span> Reflexes Triggered</h2>
+                <div id="reflexes-panel">
+                    <div class="empty-state">No reflexes triggered yet</div>
+                </div>
+            </div>
+
+            <!-- Actuator State Panel -->
+            <div class="panel">
+                <h2><span class="panel-icon">🎛️</span> Actuator State</h2>
+                <div id="actuators-panel">
+                    <div class="empty-state">Waiting for actuator updates...</div>
+                </div>
+            </div>
+
+            <!-- Event Timeline / Log Panel -->
+            <div class="panel log-panel">
+                <h2><span class="panel-icon">📋</span> Real-Time Event Log</h2>
+                <div id="timeline" class="timeline"></div>
+                <div id="log-panel" style="max-height: 300px; overflow-y: auto;">
+                    <div class="empty-state">Events will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WebSocketUrl = `ws://${window.location.hostname}:8000`;
+        
+        let ws = null;
+        let eventCount = 0;
+        let isConnected = false;
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const indicator = document.getElementById('connection-indicator');
+            const status = document.getElementById('connection-status');
+            const message = document.getElementById('connection-message');
+            
+            if (connected) {
+                indicator.classList.add('active');
+                status.textContent = `Connected to ${WebSocketUrl}`;
+                message.classList.add('connected');
+                message.classList.remove('disconnected');
+                message.textContent = '✓ Connected to ANSE event stream';
+            } else {
+                indicator.classList.remove('active');
+                status.textContent = 'Disconnected';
+                message.classList.remove('connected');
+                message.classList.add('disconnected');
+                message.textContent = '✗ Waiting for connection...';
+            }
+        }
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            const date = new Date(iso);
+            return date.toLocaleTimeString();
+        }
+
+        function addEventToTimeline(type) {
+            const timeline = document.getElementById('timeline');
+            const dot = document.createElement('div');
+            dot.className = `timeline-event ${type}`;
+            dot.title = `${type} event at ${formatTime(new Date().toISOString())}`;
+            timeline.appendChild(dot);
+            
+            // Scroll to right
+            timeline.scrollLeft = timeline.scrollWidth;
+            
+            // Keep only last 100 events visible
+            while (timeline.children.length > 100) {
+                timeline.removeChild(timeline.children[0]);
+            }
+        }
+
+        function addEventToLog(eventType, data) {
+            const log = document.getElementById('log-panel');
+            
+            // Clear empty state on first event
+            if (log.innerHTML.includes('empty-state')) {
+                log.innerHTML = '';
+            }
+            
+            const item = document.createElement('div');
+            item.className = `event-item ${eventType}`;
+            
+            const time = data.timestamp ? formatTime(data.timestamp) : formatTime(new Date().toISOString());
+            const typeClass = eventType === 'reflex_event' ? 'reflex' : (eventType === 'actuator_event' ? 'actuator' : 'sensor');
+            item.classList.add(typeClass);
+            
+            let details = '';
+            if (data.data) {
+                details = JSON.stringify(data.data, null, 2).split('\n').slice(0, 3).join(' ');
+            }
+            
+            item.innerHTML = `
+                <div class="event-time">${time}</div>
+                <div class="event-type">${eventType.replace(/_/g, ' ').toUpperCase()}</div>
+                <div class="event-details">${details}</div>
+            `;
+            
+            log.insertBefore(item, log.firstChild);
+            
+            // Keep only last 50 events
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function handleEvent(event) {
+            const { type, timestamp, data } = event;
+            
+            eventCount++;
+            document.getElementById('event-count').textContent = eventCount;
+            
+            if (type === 'state_update') {
+                // Update sensor readings
+                const sensorsPanel = document.getElementById('sensors-panel');
+                sensorsPanel.innerHTML = '';
+                
+                if (data.sensors) {
+                    for (const [name, value] of Object.entries(data.sensors)) {
+                        const html = document.createElement('div');
+                        html.className = 'sensor-reading';
+                        html.innerHTML = `
+                            <div class="label">${name.replace(/_/g, ' ').toUpperCase()}</div>
+                            <div class="value">${typeof value === 'boolean' ? (value ? '✓ ON' : '✗ OFF') : value}</div>
+                        `;
+                        sensorsPanel.appendChild(html);
+                        addEventToTimeline('sensor');
+                    }
+                }
+                
+                // Update actuators
+                const actuatorsPanel = document.getElementById('actuators-panel');
+                actuatorsPanel.innerHTML = '';
+                
+                if (data.actuators) {
+                    for (const [name, value] of Object.entries(data.actuators)) {
+                        const html = document.createElement('div');
+                        html.className = 'sensor-reading';
+                        html.innerHTML = `
+                            <div class="label">${name.replace(/_/g, ' ').toUpperCase()}</div>
+                            <div class="value">${typeof value === 'boolean' ? (value ? '✓ ON' : '✗ OFF') : value}</div>
+                        `;
+                        actuatorsPanel.appendChild(html);
+                    }
+                }
+                
+                // Update reflexes
+                const reflexesPanel = document.getElementById('reflexes-panel');
+                if (data.reflexes && data.reflexes.length > 0) {
+                    reflexesPanel.innerHTML = '';
+                    data.reflexes.forEach(reflex => {
+                        const html = document.createElement('div');
+                        html.className = 'event-item reflex';
+                        html.innerHTML = `
+                            <div class="event-time">${reflex.name || 'Unknown Reflex'}</div>
+                            <div class="event-details">${reflex.action || ''}</div>
+                        `;
+                        reflexesPanel.appendChild(html);
+                    });
+                }
+            } else if (type === 'sensor_event') {
+                addEventToLog('sensor_event', { timestamp, data });
+                addEventToTimeline('sensor');
+            } else if (type === 'reflex_event') {
+                addEventToLog('reflex_event', { timestamp, data });
+                addEventToTimeline('reflex');
+            } else if (type === 'actuator_event') {
+                addEventToLog('actuator_event', { timestamp, data });
+                addEventToTimeline('actuator');
+            }
+        }
+
+        function connect() {
+            console.log(`Connecting to ${WebSocketUrl}...`);
+            ws = new WebSocket(WebSocketUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                updateConnectionStatus(true);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleEvent(message);
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus(false);
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket closed. Reconnecting in 3s...');
+                updateConnectionStatus(false);
+                setTimeout(connect, 3000);
+            };
+        }
+
+        // Start connection
+        updateConnectionStatus(false);
+        connect();
+    </script>
+</body>
+</html>
