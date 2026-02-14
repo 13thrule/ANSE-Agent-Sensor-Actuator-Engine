@@ -7,6 +7,7 @@ Provides whitelisted access to plugin state and safe control operations.
 
 import logging
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,14 @@ class DashboardBridgePlugin:
     def __init__(self):
         """Initialize dashboard bridge."""
         self.plugins_ref = {}  # Will be populated by engine
+        self.engine = None  # Will be populated by engine
+        self.world_model = None  # Will be populated by engine
+
+    def set_engine_reference(self, engine: Any) -> None:
+        """Allow engine to register itself."""
+        self.engine = engine
+        if hasattr(engine, 'world_model'):
+            self.world_model = engine.world_model
 
     def set_plugins_reference(self, plugins_dict: Dict[str, Any]) -> None:
         """Allow engine to register available plugins."""
@@ -47,10 +56,25 @@ class DashboardBridgePlugin:
 
     async def get_world_model_events(self, limit: int = 200) -> List[Dict[str, Any]]:
         """Get recent events from the world model."""
-        # This would require access to the engine's world model
-        # For now, return empty list as it requires engine integration
-        logger.info(f"[DASHBOARD_BRIDGE] get_world_model_events (limit={limit})")
-        return []
+        try:
+            if self.world_model and hasattr(self.world_model, 'get_recent_events'):
+                return self.world_model.get_recent_events(limit=limit)
+            elif self.world_model and hasattr(self.world_model, 'events'):
+                # Return last N events
+                events = getattr(self.world_model, 'events', [])
+                return events[-limit:] if isinstance(events, list) else []
+            else:
+                # Return dummy events for demo
+                return [
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "message": "World model ready",
+                        "action": "system_initialized"
+                    }
+                ]
+        except Exception as e:
+            logger.error(f"[DASHBOARD_BRIDGE] get_world_model_events failed: {e}")
+            return []
 
     async def get_plugin_status(self) -> List[Dict[str, Any]]:
         """Get status of all loaded plugins."""

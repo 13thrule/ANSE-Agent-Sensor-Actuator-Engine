@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANSE Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #4ade80;
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #4ade80;
+      box-shadow: 0 0 10px #4ade80;
+    }
+
+    .status-dot.disconnected {
+      background: #f87171;
+      box-shadow: 0 0 10px #f87171;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: rgba(20, 20, 30, 0.8);
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .panel:hover {
+      border-color: #4ade80;
+      box-shadow: 0 0 20px rgba(74, 222, 128, 0.1);
+    }
+
+    .panel h2 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #444;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #4ade80;
+      color: #0f0f0f;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .list {
+      list-style: none;
+    }
+
+    .list-item {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 3px solid #4ade80;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .list-item.info {
+      border-left-color: #60a5fa;
+    }
+
+    .list-item.warning {
+      border-left-color: #fbbf24;
+    }
+
+    .list-item.error {
+      border-left-color: #f87171;
+    }
+
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .sensor-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      font-size: 13px;
+    }
+
+    .sensor-name {
+      font-weight: 600;
+      color: #4ade80;
+      margin-bottom: 4px;
+    }
+
+    .sensor-type {
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .reflex-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #666;
+      margin-bottom: 10px;
+      border-left: 3px solid #fbbf24;
+    }
+
+    .reflex-condition {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    .reflex-action {
+      color: #fbbf24;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .memory-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      margin-bottom: 8px;
+      border-left: 3px solid #60a5fa;
+    }
+
+    .memory-category {
+      display: inline-block;
+      background: #1e40af;
+      color: #93c5fd;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .memory-text {
+      font-size: 13px;
+      color: #d0d0d0;
+    }
+
+    .reward-display {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      text-align: center;
+    }
+
+    .metric-label {
+      color: #aaa;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #4ade80;
+    }
+
+    .camera-container {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #333;
+      margin-bottom: 10px;
+    }
+
+    .camera-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    .waveform-container {
+      width: 100%;
+      height: 80px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #333;
+      margin-top: 10px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .world-model-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .event-item {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 3px solid #60a5fa;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .event-time {
+      color: #aaa;
+      font-size: 11px;
+    }
+
+    .event-message {
+      color: #d0d0d0;
+      margin-top: 4px;
+    }
+
+    button {
+      background: #4ade80;
+      color: #0f0f0f;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #22c55e;
+      transform: translateY(-2px);
+    }
+
+    button.danger {
+      background: #f87171;
+    }
+
+    button.danger:hover {
+      background: #ef4444;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #4ade80;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .scroll-hint {
+      font-size: 11px;
+      color: #777;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>🤖 ANSE Dashboard</h1>
+      <div class="status">
+        <div class="status-indicator">
+          <span class="status-dot disconnected" id="status-dot"></span>
+          <span id="status-text">Connecting...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="dashboard-grid">
+      <!-- Detected Devices -->
+      <div class="panel">
+        <h2>📱 Detected Devices</h2>
+        <ul class="list" id="devices-list">
+          <li class="list-item">Scanning...</li>
+        </ul>
+      </div>
+
+      <!-- Detected Plugins -->
+      <div class="panel">
+        <h2>🔌 Detected Plugins <span class="badge" id="plugin-count">0</span></h2>
+        <ul class="list" id="plugins-list">
+          <li class="list-item">Loading...</li>
+        </ul>
+      </div>
+
+      <!-- Detected Sensors -->
+      <div class="panel">
+        <h2>📊 Detected Sensors <span class="badge" id="sensor-count">0</span></h2>
+        <div class="sensor-grid" id="sensors-grid">
+          <div class="sensor-card">Scanning...</div>
+        </div>
+      </div>
+
+      <!-- Detected Actuators -->
+      <div class="panel">
+        <h2>⚙️ Detected Actuators <span class="badge" id="actuator-count">0</span></h2>
+        <div class="sensor-grid" id="actuators-grid">
+          <div class="sensor-card">Scanning...</div>
+        </div>
+      </div>
+
+      <!-- Reflex Rules -->
+      <div class="panel">
+        <h2>⚡ Reflex Rules <span class="badge" id="reflex-count">0</span></h2>
+        <div id="reflexes-container">
+          <div class="list-item info">No reflexes configured</div>
+        </div>
+      </div>
+
+      <!-- Memory Entries -->
+      <div class="panel">
+        <h2>🧠 Memory Entries <span class="badge" id="memory-count">0</span></h2>
+        <div id="memory-container">
+          <div class="list-item info">No memories stored</div>
+        </div>
+      </div>
+
+      <!-- Reward State -->
+      <div class="panel">
+        <h2>🏆 Reward State</h2>
+        <div class="reward-display">
+          <div class="metric">
+            <div class="metric-label">Total Reward</div>
+            <div class="metric-value" id="reward-total">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Events</div>
+            <div class="metric-value" id="reward-events">0</div>
+          </div>
+        </div>
+        <div class="list-item info" id="reward-goal" style="display:none;">🎯 Goal Achieved!</div>
+      </div>
+
+      <!-- Camera Feed (Full Width) -->
+      <div class="panel full-width">
+        <h2>📷 Camera Feed</h2>
+        <div class="camera-container">
+          <div class="camera-placeholder" id="camera-status">
+            <span class="loading"></span> Loading camera...
+          </div>
+          <img id="camera-feed" style="display:none;" />
+        </div>
+        <button onclick="refreshCamera()">Refresh Frame</button>
+      </div>
+
+      <!-- Microphone Waveform (Full Width) -->
+      <div class="panel full-width">
+        <h2>🎤 Microphone Waveform</h2>
+        <div class="waveform-container">
+          <canvas id="waveform-canvas"></canvas>
+        </div>
+        <button onclick="recordAudio()">Record Audio Chunk</button>
+      </div>
+
+      <!-- World Model Events (Full Width) -->
+      <div class="panel full-width">
+        <h2>🌍 World Model Events</h2>
+        <div class="world-model-list" id="world-model-list">
+          <div class="event-item">
+            <div class="event-time">Loading...</div>
+          </div>
+        </div>
+        <div class="scroll-hint">↓ Scroll to see more</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const WS_URL = "ws://127.0.0.1:8765";
+    let ws = null;
+    let nextId = 1;
+    const pending = new Map();
+
+    // Connect to ANSE
+    function connect() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        setStatus(true);
+        console.log("Connected to ANSE");
+        loadAllData();
+        // Refresh every 2 seconds
+        setInterval(loadAllData, 2000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.id && pending.has(msg.id)) {
+            const { resolve } = pending.get(msg.id);
+            pending.delete(msg.id);
+            resolve(msg.result);
+          }
+        } catch (e) {
+          console.error("Failed to parse message:", e);
+        }
+      };
+
+      ws.onerror = () => {
+        setStatus(false);
+        console.error("WebSocket error");
+      };
+
+      ws.onclose = () => {
+        setStatus(false);
+        console.log("Disconnected from ANSE");
+        setTimeout(connect, 3000); // Reconnect after 3 seconds
+      };
+    }
+
+    function setStatus(connected) {
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
+      if (connected) {
+        dot.className = "status-dot connected";
+        text.textContent = "🟢 Connected";
+      } else {
+        dot.className = "status-dot disconnected";
+        text.textContent = "🔴 Disconnected";
+      }
+    }
+
+    function call(method, params = {}) {
+      return new Promise((resolve, reject) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          return reject(new Error("WebSocket not connected"));
+        }
+
+        const id = nextId++;
+        pending.set(id, { resolve, reject });
+
+        ws.send(JSON.stringify({
+          jsonrpc: "2.0",
+          method: `dashboard_bridge.${method}`,
+          params,
+          id
+        }));
+      });
+    }
+
+    async function loadAllData() {
+      try {
+        const [plugins, body, reflexes, memory, reward, worldModel] = await Promise.all([
+          call("get_plugin_status"),
+          call("get_body_schema"),
+          call("get_reflex_status"),
+          call("get_memory_entries", { limit: 50 }),
+          call("get_reward_state"),
+          call("get_world_model_events", { limit: 50 })
+        ]);
+
+        updatePlugins(plugins || []);
+        updateBodySchema(body || {});
+        updateReflexes(reflexes || []);
+        updateMemory(memory || []);
+        updateReward(reward || {});
+        updateWorldModel(worldModel || []);
+      } catch (e) {
+        console.error("Failed to load data:", e);
+      }
+    }
+
+    function updatePlugins(plugins) {
+      const list = document.getElementById("plugins-list");
+      const count = document.getElementById("plugin-count");
+      
+      if (plugins.length === 0) {
+        list.innerHTML = '<li class="list-item info">No plugins loaded</li>';
+      } else {
+        list.innerHTML = plugins
+          .map(p => `<li class="list-item">${p.name} <small>v${p.version || "?"}</small></li>`)
+          .join("");
+      }
+      count.textContent = plugins.length;
+    }
+
+    function updateBodySchema(body) {
+      const sensors = body.sensors || [];
+      const actuators = body.actuators || [];
+
+      // Update sensors
+      const sensorsGrid = document.getElementById("sensors-grid");
+      const sensorCount = document.getElementById("sensor-count");
+      
+      if (sensors.length === 0) {
+        sensorsGrid.innerHTML = '<div class="sensor-card">No sensors detected</div>';
+      } else {
+        sensorsGrid.innerHTML = sensors
+          .map(s => `
+            <div class="sensor-card">
+              <div class="sensor-name">${s.name}</div>
+              <div class="sensor-type">${s.description}</div>
+            </div>
+          `)
+          .join("");
+      }
+      sensorCount.textContent = sensors.length;
+
+      // Update actuators
+      const actuatorsGrid = document.getElementById("actuators-grid");
+      const actuatorCount = document.getElementById("actuator-count");
+      
+      if (actuators.length === 0) {
+        actuatorsGrid.innerHTML = '<div class="sensor-card">No actuators detected</div>';
+      } else {
+        actuatorsGrid.innerHTML = actuators
+          .map(a => `
+            <div class="sensor-card">
+              <div class="sensor-name">${a.name}</div>
+              <div class="sensor-type">${a.description}</div>
+            </div>
+          `)
+          .join("");
+      }
+      actuatorCount.textContent = actuators.length;
+    }
+
+    function updateReflexes(reflexes) {
+      const container = document.getElementById("reflexes-container");
+      const count = document.getElementById("reflex-count");
+      
+      if (reflexes.length === 0) {
+        container.innerHTML = '<div class="list-item info">No reflexes configured</div>';
+      } else {
+        container.innerHTML = reflexes
+          .map(r => `
+            <div class="reflex-card">
+              <div class="reflex-condition">${r.sensor_name} ${r.comparison} ${r.threshold}</div>
+              <div class="reflex-action">→ ${r.action_tool}</div>
+              <div style="font-size: 11px; color: #888; margin-top: 4px;">Triggered ${r.triggered_count || 0}x</div>
+            </div>
+          `)
+          .join("");
+      }
+      count.textContent = reflexes.length;
+    }
+
+    function updateMemory(memories) {
+      const container = document.getElementById("memory-container");
+      const count = document.getElementById("memory-count");
+      
+      if (memories.length === 0) {
+        container.innerHTML = '<div class="list-item info">No memories stored</div>';
+      } else {
+        container.innerHTML = memories
+          .slice(0, 10)
+          .map(m => `
+            <div class="memory-card">
+              <div class="memory-category">${m.category}</div>
+              <div class="memory-text">${m.text}</div>
+            </div>
+          `)
+          .join("");
+      }
+      count.textContent = memories.length;
+    }
+
+    function updateReward(reward) {
+      document.getElementById("reward-total").textContent = (reward.total_reward || 0).toFixed(1);
+      document.getElementById("reward-events").textContent = reward.reward_count || 0;
+      
+      const goal = document.getElementById("reward-goal");
+      if (reward.goal_achieved) {
+        goal.style.display = "block";
+      } else {
+        goal.style.display = "none";
+      }
+    }
+
+    function updateWorldModel(events) {
+      const list = document.getElementById("world-model-list");
+      
+      if (events.length === 0) {
+        list.innerHTML = '<div class="event-item"><div class="event-time">No events</div></div>';
+      } else {
+        list.innerHTML = events
+          .slice(0, 20)
+          .map(e => `
+            <div class="event-item">
+              <div class="event-time">${new Date(e.timestamp).toLocaleTimeString()}</div>
+              <div class="event-message">${e.message || e.action || "Event"}</div>
+            </div>
+          `)
+          .join("");
+      }
+    }
+
+    async function refreshCamera() {
+      try {
+        const status = document.getElementById("camera-status");
+        const img = document.getElementById("camera-feed");
+        
+        status.innerHTML = '<span class="loading"></span> Loading...';
+        const frame = await call("get_camera_frame");
+        
+        if (frame) {
+          img.src = `data:image/jpeg;base64,${frame}`;
+          img.style.display = "block";
+          status.style.display = "none";
+        } else {
+          status.innerHTML = "No camera feed available";
+        }
+      } catch (e) {
+        document.getElementById("camera-status").innerHTML = "Camera error";
+        console.error("Camera error:", e);
+      }
+    }
+
+    async function recordAudio() {
+      try {
+        const canvas = document.getElementById("waveform-canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Set canvas size
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        // Draw loading
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#4ade80";
+        ctx.textAlign = "center";
+        ctx.fillText("Recording...", canvas.width / 2, canvas.height / 2);
+        
+        const chunk = await call("get_audio_chunk");
+        
+        // Draw waveform
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const samples = chunk.samples || [];
+        if (samples.length > 0) {
+          ctx.strokeStyle = "#4ade80";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          
+          const step = Math.max(1, Math.floor(samples.length / canvas.width));
+          const centerY = canvas.height / 2;
+          const scale = canvas.height / 4;
+          
+          for (let i = 0; i < samples.length; i += step) {
+            const x = (i / samples.length) * canvas.width;
+            const y = centerY - (samples[i] * scale);
+            
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.stroke();
+        }
+      } catch (e) {
+        console.error("Audio error:", e);
+      }
+    }
+
+    // Start connection on load
+    window.addEventListener("load", () => {
+      connect();
+      // Load camera on startup
+      setTimeout(refreshCamera, 1000);
+    });
+  </script>
+</body>
+</html>
