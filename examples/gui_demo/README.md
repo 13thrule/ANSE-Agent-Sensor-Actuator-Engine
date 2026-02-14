@@ -4,6 +4,32 @@ A minimal but **completely real** demonstration of ANSE's event-driven architect
 
 **No simulation toys. No toy WebSockets. This connects directly to ANSE's world model, reflexes, and actuators.**
 
+## Quick Test: See the Nervous System Working
+
+Want to see it work first, without the GUI?
+
+```bash
+cd examples/gui_demo
+python demo_simple.py
+```
+
+This shows the **three phases of the nervous system**:
+1. **SENSOR**: Distance readings gradually approaching (50→5cm)
+2. **REFLEX**: Proximity alarm triggers when too close (< 10cm)
+3. **ACTUATOR**: Movement control responds (IDLE → STOPPED → MOVING)
+
+**Output example:**
+```
+[0] Distance:  50.0cm (state: IDLE)
+[1] Distance:  44.5cm (state: IDLE)
+...
+[8] Distance:   5.0cm -> REFLEX TRIGGERED (too close!) -> STOP
+[9] Distance:  10.5cm (state: STOPPED)
+[10] Distance:  16.0cm -> REFLEX CLEARED (safe now) -> RESUME
+```
+
+All 24 events recorded to ANSE world model. ✅
+
 ## What This Demo Shows
 
 The dashboard visualizes ANSE as a nervous system in real time:
