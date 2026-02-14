@@ -168,6 +168,34 @@
             font-size: 0.85em;
         }
 
+        .world-model-state {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .state-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: rgba(0, 217, 255, 0.05);
+            border-left: 2px solid #00d9ff;
+            border-radius: 4px;
+        }
+
+        .state-label {
+            color: #888;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .state-value {
+            color: #00d9ff;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
         .log-panel {
             grid-column: 1 / -1;
         }
@@ -402,25 +430,32 @@
                 const worldModel = data.world_model;
                 const worldModelPanel = document.getElementById('worldmodel-panel');
                 
+                const timestamp = data.timestamp;
+                const timeStr = timestamp.substring(11, 19);  // HH:MM:SS
+                
                 worldModelPanel.innerHTML = `
-                    <div class="world-model-status">
-                        <div style="font-size: 0.9em; color: #888; margin-bottom: 10px;">
-                            Updated: ${timestamp.substring(11, 19)}
+                    <div class="world-model-state">
+                        <div class="state-row">
+                            <span class="state-label">Distance:</span>
+                            <span class="state-value">${worldModel.distance_cm} cm</span>
                         </div>
-                        <div class="sensor-reading">
-                            <div class="label">DISTANCE</div>
-                            <div class="value">${worldModel.distance_cm}cm</div>
-                            <div style="font-size: 0.8em; color: ${worldModel.safe ? '#00ff00' : '#ff6600'};">
-                                ${worldModel.safe ? '✓ SAFE' : '⚠ DANGEROUS'}
-                            </div>
+                        <div class="state-row">
+                            <span class="state-label">Safe:</span>
+                            <span class="state-value" style="color: ${worldModel.safe ? '#00ff00' : '#ff6600'};">
+                                ${worldModel.safe ? '✓ YES' : '✗ NO'}
+                            </span>
                         </div>
-                        <div class="sensor-reading">
-                            <div class="label">STATE</div>
-                            <div class="value">${worldModel.actuator_state}</div>
+                        <div class="state-row">
+                            <span class="state-label">Actuator State:</span>
+                            <span class="state-value">${worldModel.actuator_state}</span>
                         </div>
-                        <div class="sensor-reading">
-                            <div class="label">TOTAL EVENTS</div>
-                            <div class="value">${worldModel.total_events}</div>
+                        <div class="state-row">
+                            <span class="state-label">Last Reflex:</span>
+                            <span class="state-value">${worldModel.last_reflex}</span>
+                        </div>
+                        <div class="state-row" style="border-top: 1px solid #333; padding-top: 8px; margin-top: 8px; font-size: 0.85em; color: #888;">
+                            <span class="state-label">Updated:</span>
+                            <span class="state-value">${timeStr}</span>
                         </div>
                     </div>
                 `;

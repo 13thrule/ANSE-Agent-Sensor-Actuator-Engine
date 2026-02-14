@@ -61,6 +61,9 @@ class GUIDemoBackend:
         # Actuator state (what the actuator does)
         self.movement_state = "IDLE"  # IDLE, MOVING, STOPPED
         
+        # World model state (brain's understanding)
+        self.last_reflex = None  # Track the last reflex triggered
+        
     async def initialize_engine(self):
         """Initialize ANSE engine with real plugins."""
         try:
@@ -162,6 +165,7 @@ class GUIDemoBackend:
                 "distance_cm": round(self.distance, 1),
                 "safe": self.distance > 10,
                 "actuator_state": self.movement_state,
+                "last_reflex": self.last_reflex or "none",
                 "total_events": len(self.world_model.get_recent(100)) if self.world_model else 0
             }
         }
@@ -250,6 +254,7 @@ class GUIDemoBackend:
         
         if self.distance < 10 and self.movement_state != "STOPPED":
             # Reflex triggered!
+            self.last_reflex = "proximity_safeguard"
             await self.record_and_broadcast_event("reflex_triggered", {
                 "reflex": "Proximity Alert",
                 "condition": "distance < 10cm",
@@ -261,6 +266,7 @@ class GUIDemoBackend:
         
         elif self.distance > 15 and self.movement_state == "STOPPED":
             # Safe zone again, can move
+            self.last_reflex = "clear_to_move"
             await self.record_and_broadcast_event("reflex_triggered", {
                 "reflex": "Clear to Move",
                 "condition": "distance > 15cm",
@@ -269,6 +275,10 @@ class GUIDemoBackend:
             
             # Execute actuator action
             await self.execute_actuator_action("MOVING")
+        else:
+            # No reflex triggered
+            if self.last_reflex is not None:
+                self.last_reflex = None
     
     async def execute_actuator_action(self, action: str):
         """
