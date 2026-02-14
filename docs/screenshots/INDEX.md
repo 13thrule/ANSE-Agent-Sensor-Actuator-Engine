@@ -15,13 +15,12 @@ Add your screenshot image files here (PNG, JPG, etc.)
 
 ## Screenshots Added
 
-> Add your screenshot entries below as you take them
+✅ **Screenshots successfully captured and moved from /dashboard_ui/**
 
 | Filename | Description | Status |
 |----------|-------------|--------|
-| | | ⏳ |
-| | | ⏳ |
-| | | ⏳ |
+| 01-full-dashboard.png | Complete demo GUI with all 5 panels + event streaming (758 KB) | ✅ |
+| 02-event-log-detail.png | Real-time event log showing sensor/reflex/actuator events (219 KB) | ✅ |
 
 ---
 

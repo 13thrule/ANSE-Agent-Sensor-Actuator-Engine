@@ -46,6 +46,10 @@ htmlcov/
 *.png
 *.mp4
 
+# Exception: Allow screenshots in docs folder
+!docs/screenshots/*.png
+!docs/screenshots/*.jpg
+
 # OS
 .DS_Store
 Thumbs.db

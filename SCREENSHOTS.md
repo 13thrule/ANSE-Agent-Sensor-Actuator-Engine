@@ -29,7 +29,7 @@ Example:
   Time: 2026-02-14 12:34:56.789Z
 ```
 
-![Sensor Panel](docs/screenshots/01-sensor-panel.png)
+![Full Dashboard Demo](docs/screenshots/01-full-dashboard.png)
 
 ---
 
@@ -104,7 +104,7 @@ Timeline:
   ...
 ```
 
-![Event Log Panel](docs/screenshots/05-event-log-panel.png)
+![Event Log Detail](docs/screenshots/02-event-log-detail.png)
 
 ---
 
