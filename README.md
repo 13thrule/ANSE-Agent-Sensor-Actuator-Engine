@@ -1,983 +1,472 @@
 # ANSE — Agent Nervous System Engine
 
-![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Tests Passing](https://img.shields.io/badge/tests-111%20passing-brightgreen.svg)
+![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Tests Passing](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
-[![GitHub stars](https://img.shields.io/github/stars/13thrule/ANSE-Agent-Nervous-System-Engine?style=social)](https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine)
 
-> **Stop wishing AI could see. Make it happen in 5 minutes.**
+> **Build autonomous agents that use cameras, microphones, and custom tools.**
 
-ANSE connects Claude, GPT-4, or any LLM to **cameras, microphones, and speakers** with zero boilerplate. Build autonomous agents that actually *see and hear the world*.
+ANSE is a local runtime engine for building autonomous agents with sensor access and tool calling. Instead of manually wiring sensor drivers and agent logic, define your tools once and agents discover + use them autonomously.
 
-**[Try the demo →](#-autonomous-agent-demo) | [See what you can build →](#-real-world-use-cases) | [Quick start →](#-5-minute-setup) | [Plugin system →](#extending-anse-with-plugins)**
-
----
-
-## About ANSE
-
-**ANSE** is an open-source **runtime engine** that gives Large Language Models real-world perception and control capabilities. Instead of writing boilerplate sensor integration code in every project, ANSE handles:
-
-- 📸 **Vision**: Autonomous camera access with real-time frame analysis
-- 🎤 **Audio**: Microphone recording and speech analysis
-- 🔊 **Speech**: Text-to-speech with multiple voices
-- 🔌 **Extensibility**: Plugin system for custom sensors (Zigbee, Arduino, IoT, Modbus)
-- 🔒 **Safety**: Built-in rate limits, audit trails, permission scopes
-- 📋 **Compliance**: SHA256-signed immutable event logs
-
-Perfect for:
-- **Embodied AI**: Robots that see and respond
-- **IoT Automation**: Devices that make decisions based on sensor data
-- **Quality Control**: Vision-based defect detection
-- **Healthcare**: Patient monitoring and fall detection
-- **Smart Homes**: Actually autonomous (not scripted) agent control
+**[Quick Start](#quick-start) | [Run Demo](#run-the-demo) | [Architecture](#architecture) | [Plugins](#plugin-system) | [Docs](#documentation)**
 
 ---
 
-> **GitHub Topics:** AI, Autonomous Agents, LLM, Computer Vision, Robotics, IoT, Python
-> 
-> **Technologies:** Python 3.11+ | WebSocket JSON-RPC | Async/Await | OpenCV | Soundfile | pyttsx3
-
----
-
-## 🎯 The Real Story
-
-### Without ANSE 😞
-```python
-# Week 1: Wire up camera access
-import cv2
-cap = cv2.VideoCapture(0)
-ret, frame = cap.read()
-if not ret: # Handle errors...
-
-# Week 2: Add permissions, safety checks, logging
-# Week 3: Integrate with LLM
-# Week 4: Debug why Claude never uses the camera
-
-# Result: Tons of glue code. Agent still can't decide to use camera autonomously.
-```
-
-### With ANSE 🚀
-```python
-# 5 minutes: Agent autonomously sees and speaks
-from anse import AutonomousAgent
-
-agent = AutonomousAgent()
-agent.task("Look around and tell me what you see")
-
-# Agent autonomously:
-# 1. Sees camera has 640×480 capability
-# 2. Calls capture_frame() → Gets real image
-# 3. Analyzes it (detects 9,866 edges, 554 corners)
-# 4. Speaks: "I see a desk, laptop, and coffee cup"
-# 5. Logs everything in audit trail
-
-# Result: Working autonomous agent. No boilerplate.
-```
-
----
-
-## 🎥 See It In Action
-
-```bash
-python agent_demo.py
-```
-
-**Real agent. Real analysis. Real hardware.**
-
-```
-✓ Calling capture_frame()
-   → Captured 640×480 RGB frame
-
-✓ Calling analyze_frame()
-   → Detected 9,866 edges | 554 corners | Avg color: BGR(43,52,71)
-
-✓ Calling record_audio()
-   → Recorded 2.0s @ 16kHz stereo audio
-
-✓ Calling analyze_audio()
-   → RMS energy: 0.0206 | Peak amplitude: 0.1689
-   → Dominant frequencies: [223, 219, 212, 232, 212] Hz
-
-✓ Calling say()
-   → "I can see, hear, and speak!"
-
-📝 Agent Memory: 5 autonomous decisions tracked
-```
-
----
-
-## 🌟 Real-World Use Cases
-
-### 🏭 Factory Quality Control
-```python
-agent.task("Watch the assembly line and flag defects")
-
-# Agent autonomously:
-# - Streams camera feed 24/7
-# - Detects misaligned parts (image analysis)
-# - Alerts human supervisor when issues found
-# - Logs everything for compliance audits
-```
-**Result:** 40% fewer defects, full FDA audit trail
-
-### 🏥 Patient Monitoring
-```python
-agent.task("Alert me if the patient falls or calls for help")
-
-# Agent autonomously:
-# - Listens for distress calls (audio analysis)
-# - Detects falls via camera (computer vision)
-# - Calls nurse immediately
-# - Documents incident with timestamp + proof
-```
-**Result:** Faster emergency response, fewer missed alerts
-
-### 🏠 Smart Home Assistant
-```python
-agent.task("Make me comfortable when I come home")
-
-# Agent autonomously:
-# - Recognizes you entering (camera)
-# - Adjusts lights to preference (learns over time)
-# - Sets temperature (learns patterns)
-# - Explains each decision ("I'm dimming lights because it's evening")
-```
-**Result:** True automation without writing 100 scripts
-
----
-
-## ✅ Who Should Use ANSE?
-
-### 🤖 You're building this?
-- **Embodied AI research** — Train agents with real sensors
-- **Factory automation** — Vision-based quality control
-- **Healthcare monitoring** — Patient fall detection, vital signs
-- **Smart homes** — Voice assistants with real awareness
-- **Security systems** — AI that actually sees
-- **Robotics** — Hardware-agnostic agent runtime
-- **Edge computing** — Local AI with full compliance
-
-### ❌ You probably don't need ANSE if:
-- Pure chatbot (no sensors needed)
-- Cloud-only solution
-- Real-time critical (<1ms latency requirements)
-
----
-
-## ⚡ What You Get
-
-| Feature | Without ANSE | With ANSE |
-|---------|--------------|-----------|
-| **Time to first agent** | 3-4 weeks | 5 minutes |
-| **Camera integration** | Custom code | ✅ Built-in |
-| **Microphone integration** | Custom code | ✅ Built-in |
-| **Safety/permissions** | Manual implementation | ✅ Automatic |
-| **Audit compliance** | Custom logging | ✅ Immutable signed logs |
-| **Multi-agent isolation** | Custom management | ✅ Built-in |
-| **Sim→Real transfer** | Separate codebases | ✅ Same API everywhere |
-| **LLM integration** | Custom adapters | ✅ Function-calling ready |
-
----
-
-## 🚀 5-Minute Setup
-
-```bash
-# Clone and install
-git clone https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine
-cd ANSE-Agent-Nervous-System-Engine
-pip install -r requirements.txt
-
-# Run the autonomous agent demo (no hardware required!)
-python agent_demo.py
-
-# See agent autonomously:
-# ✓ Discover 8 available tools
-# ✓ Capture frame from camera
-# ✓ Analyze edges, corners, colors
-# ✓ Record audio from microphone  
-# ✓ Analyze frequencies, energy
-# ✓ Speak result using TTS
-# ✓ Log all actions to memory
-```
-
----
-
-## 📖 Documentation
-
-- **[Agent Demo Details](AUTONOMOUS_AGENT_UPDATE.md)** — See how the autonomous agent works
-- **[API Reference](docs/API.md)** — Complete tool documentation
-- **[Architecture Guide](docs/DESIGN.md)** — Deep dive into ANSE internals
-- **[Quick Start](docs/QUICKSTART.md)** — Hands-on tutorial
-
----
-
-# 🤖 Autonomous Agent Demo
-
-**NEW:** See ANSE in action with a working autonomous agent that proves real sensor data processing!
-
-```bash
-python agent_demo.py
-```
-
-**What it does:**
-- ✅ Discovers 8 available tools (camera, microphone, speaker, analysis)
-- ✅ Autonomously decides which tools to use based on task
-- ✅ Captures frame from camera (640×480 RGB)
-- ✅ Analyzes frame using computer vision (detects 9,866 edges, 554 corners)
-- ✅ Records audio from microphone (2.0s @ 16kHz)
-- ✅ Analyzes audio using FFT (extracts dominant frequencies: 223, 219, 212 Hz)
-- ✅ Speaks result using text-to-speech
-- ✅ Maintains memory log of all actions
-
-**Output Example:**
-```
-🎯 Task: I can see, listen, and speak. Show me what you can do!
-
-✓ Calling capture_frame() → 640×480 RGB image saved
-✓ Calling analyze_frame() → 9,866 edges | 554 corners | Avg color BGR(43,52,71)
-
-✓ Calling record_audio() → 2.0s @ 16kHz saved
-✓ Calling analyze_audio() → RMS: 0.0206 | Peak: 0.1689 | Freqs: [223, 219, 212, 232, 212] Hz
-
-✓ Calling say() → "I am an autonomous agent powered by ANSE"
-
-📝 Agent memory: 5 events tracked with timestamps
-```
-
-**See:** [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for full technical details.
-
----
-
-## 🚀 What ANSE Offers: Why Integrate Your APIs?
-
-### The Problem You're Solving
-
-Your APIs are powerful, but how do LLMs and autonomous agents actually *discover* and *use* them?
-
-- ❌ Manual prompt engineering: "Here are 47 endpoints you could use..."
-
-- ❌ Rigid orchestration: "Agent, you must call `step_1()`, then `step_2()`"
-- ❌ Black-box decisions: No visibility into why the agent chose that action
-- ❌ No safety guardrails: Agents can't be trusted with high-risk operations
-
-### The ANSE Solution
-
-**Plug your APIs into ANSE and get:**
-
-| Benefit | What You Get |
-|---------|-------------|
-| **Autonomous Discovery** | Agents see your API schemas and learn when to call what. No prompt engineering needed. |
-| **Complete Visibility** | Every action logged, timestamped, and signed. Audit trails for compliance. Know exactly what happened. |
-| **Safety by Default** | Per-agent rate limits, resource quotas, approval gates. High-risk actions require human sign-off. |
-| **LLM Ready** | Works with Claude, GPT-4, open source models. Function-calling loops just work. |
-| **Reproducible** | Deterministic execution with replay capability. Train in sim, deploy to real seamlessly. |
-| **Language Agnostic** | WebSocket JSON-RPC. Your API can be Python, Node.js, Go, anything. |
-
----
-
-## 💡 Real-World Use Cases
-
-### Use Case 1: Embodied AI Assistant
-Build an AI that controls your home or business.
-
-```python
-# Your APIs
-- control_lights(room, brightness)
-- adjust_temperature(target_temp)
-- open_door(door_id)
-- get_camera_feed(camera_id)
-
-# What happens
-Claude connects to ANSE → sees your APIs → decides autonomously when to turn on lights,
-adjust AC, unlock doors based on voice commands. You get a full audit trail.
-Every action logged. Human approval can gate sensitive operations (unlock doors).
-```
-
-### Use Case 2: Research Agent
-Train an agent to learn tool use in simulation, then transfer to real robots.
-
-```python
-# Your APIs (simulated)
-- simulate_robot_arm(x, y, z)
-- simulate_gripper(force)
-- simulate_camera()
-
-# What happens
-Agent trains offline with perfect reproducibility (seeded randomness).
-Agent learns when to reach, when to grip, what to observe.
-Then deploy the same trained policy to real robot—APIs are identical.
-```
-
-### Use Case 3: Compliance Automation
-Build an agent that executes workflows while maintaining an immutable audit trail.
-
-```python
-# Your APIs
-- create_invoice(customer, amount)
-- approve_transaction(id, approval_code)
-- log_entry(event)
-- send_notification(recipient, message)
-
-# What happens
-Agent executes your workflow. Every step is logged with SHA256 hashes.
-Non-repudiation: who authorized what, when, and why.
-Export audit trail for regulators. Replay any incident for debugging.
-```
-
----
-
-## 📊 Integration Benefits at a Glance
-
-| Aspect | Benefit |
-|--------|---------|
-| **Developer Effort** | Register your APIs once; agents discover them automatically. No glue code. |
-| **Safety & Trust** | Rate limits, approval gates, per-agent quotas, immutable audit logs. |
-| **Debugging** | Replay any execution deterministically. See exactly what happened, why. |
-| **Scaling** | Multi-agent isolation. 100+ agents per engine without interference. |
-| **Cost Control** | Per-agent quotas and rate limits prevent runaway API calls. |
-| **Compliance** | Signed, immutable audit logs. Full provenance of every action. |
-
----
-
-## 🤖 Claude Plugin Integration
-
-ANSE can be deployed as a **Claude Plugin** so you can use Claude directly to control your APIs.
-
-### How It Works
-
-1. **Deploy ANSE Endpoint**: Run ANSE with your APIs registered
-2. **Install Claude Plugin**: Point Claude to your ANSE WebSocket endpoint
-3. **Claude Discovers APIs**: Claude reads your API schemas
-4. **Claude Controls**: Chat with Claude; it decides which APIs to call
-5. **Full Audit Trail**: Every action logged and signed
-
-### Example: Claude Plugin in Action
-
-```
-You: "Turn on the living room lights to 80% brightness and set temperature to 72°F"
-
-Claude (via ANSE plugin):
-  ✓ Calls: control_lights("living room", 80)
-  ✓ Calls: adjust_temperature(72)
-  ✓ Logs: Both actions to audit trail with timestamps
-
-Response: "Done! Lights are at 80% and temperature is set to 72°F."
-```
-
-### Setting Up Claude Plugin
-
-1. **Register ANSE as a capability source:**
-   ```bash
-   # Start ANSE
-   python -m anse.engine_core
-   
-   # Your ANSE endpoint is now: ws://127.0.0.1:8765
-   ```
-
-2. **Configure Claude Plugin Manifest:**
-   ```json
-   {
-     "schema_version": "v1",
-     "name_for_human": "ANSE API Integration",
-     "name_for_model": "anse_api_gateway",
-     "description_for_human": "Execute APIs safely with audit logging",
-     "description_for_model": "Access to registered APIs with safety constraints",
-     "auth": {
-       "type": "none"
-     },
-     "api": {
-       "type": "websocket",
-       "url": "ws://127.0.0.1:8765"
-     },
-     "contact_email": "your-email@example.com",
-     "legal_info_url": "https://your-domain.com/legal"
-   }
-   ```
-
-3. **Claude Automatically**:
-   - Discovers all registered APIs
-   - Understands rate limits and safety constraints
-   - Respects approval gates for sensitive operations
-   - Logs every action to the audit trail
-
----
-
-## 📋 Register Your APIs (5-Minute Setup)
-
-Getting your APIs into ANSE is trivial. Here's the pattern:
-
-### Step 1: Wrap Your API
-
-```python
-# my_company_tools.py
-async def transfer_funds(from_account: str, to_account: str, amount: float) -> dict:
-    """Transfer funds between accounts."""
-    # Your implementation
-    result = await call_your_bank_api(from_account, to_account, amount)
-    return {
-        "status": "success",
-        "transaction_id": result["id"],
-        "amount": amount,
-        "timestamp": datetime.now().isoformat()
-    }
-
-async def get_account_balance(account_id: str) -> dict:
-    """Fetch the current balance of an account."""
-    balance = await call_your_bank_api_get_balance(account_id)
-    return {
-        "account_id": account_id,
-        "balance": balance,
-        "currency": "USD"
-    }
-```
-
-### Step 2: Register with ANSE
-
-Create `register_company_apis.py`:
-
-```python
-from anse.tool_registry import register_tool
-from my_company_tools import transfer_funds, get_account_balance
-
-# Register read-only API (no approval needed)
-register_tool(
-    get_account_balance,
-    description="Check the balance of a bank account",
-    sensitivity="public",  # No approval required
-    cost=0.01,  # Cost hint for Claude
-)
-
-# Register high-risk API (requires approval)
-register_tool(
-    transfer_funds,
-    description="Transfer funds between accounts (requires approval)",
-    sensitivity="private",  # Requires human approval
-    cost=1.0,  # Expensive operation
-    requires_approval=True,
-)
-
-print("✓ APIs registered! Start the engine with: python -m anse.engine_core")
-```
-
-### Step 3: Start the Engine
-
-```bash
-# Run your registration script
-python register_company_apis.py
-
-# Start ANSE engine
-python -m anse.engine_core
-```
-
-Your APIs are now discoverable by Claude and other LLM agents!
-
-### Step 4: Use from Claude
-
-Claude automatically discovers your APIs:
-
-```
-You: "What's the balance of account ACC123 and transfer $500 to ACC456"
-
-Claude:
-  ✓ Calls: get_account_balance("ACC123")
-  ✓ Returns: {"balance": 5000.00, ...}
-  ✓ Requests approval for: transfer_funds(...)
-  ⏳ Awaiting human approval...
-  ✓ Approval received
-  ✓ Calls: transfer_funds("ACC123", "ACC456", 500)
-  ✓ Result: {"transaction_id": "TXN-2026-001", ...}
-  ✓ Audit logged: SHA256-signed entry
-
-Response: "Account ACC123 has a balance of $5,000.00. I've transferred $500 to ACC456 (Transaction ID: TXN-2026-001). You can see the full transaction details in the audit log."
-```
-
----
-
-## 🔐 API Safety Features
-
-Every API you register gets these for free:
-
-| Feature | Benefit |
-|---------|---------|
-| **Approval Gates** | Mark sensitive APIs as `sensitivity="private"`. Humans must approve before execution. |
-| **Rate Limiting** | Prevent abuse. Set max calls/minute per API per agent. |
-| **Quotas** | Per-agent resource limits. Agents can't run up your API bill. |
-| **Immutable Audit Trail** | Every call logged with SHA256 signatures. Regulators can verify the chain of custody. |
-| **Error Handling** | APIs that crash are gracefully caught. Errors logged. No cascading failures. |
-| **Replay** | Deterministically replay any execution from audit logs. Debug incidents in minutes. |
-
----
-
-## 🛡️ Compliance & Audit Logging
-
-Here's what the audit log looks like:
-
-```json
-{
-  "timestamp": "2026-02-12T14:30:45.123456Z",
-  "event_id": "EVT-2026-001842",
-  "agent_id": "claude-assistant-prod-001",
-  "api_called": "transfer_funds",
-  "arguments": {
-    "from_account": "ACC123",
-    "to_account": "ACC456",
-    "amount": 500.0
-  },
-  "result": {
-    "status": "success",
-    "transaction_id": "TXN-2026-001",
-    "timestamp": "2026-02-12T14:30:46.654321Z"
-  },
-  "approval_token": "APPROVED_BY_alice@company.com_2026-02-12T14:30:44Z",
-  "execution_time_ms": 1231,
-  "error": null,
-  "audit_hash": "sha256:abc123def456...",
-  "previous_hash": "sha256:xyz789uvw012..."  // Links to prior entry
-}
-```
-
-**Non-repudiation guarantee:** The agent can't deny calling your API. The approval token proves a human authorized it. The hash chain proves no tampering.
-
----
-
-## 💰 Billing & Cost Tracking
-
-Each API has a cost hint. Claude optimizes calls:
-
-```python
-register_tool(
-    expensive_ml_inference,
-    cost=10.0,  # 10 cents per call
-)
-
-register_tool(
-    cheap_lookup,
-    cost=0.01,  # 1 cent per call
-)
-```
-
-Claude sees these hints and:
-- ✅ Prefers cheaper APIs when possible
-- ✅ Batches calls to reduce overhead
-- ✅ Informs the user of costs upfront
-
-Audit logs track actual costs. You can bill agents back per their API usage.
-
----
-
-## Why Your APIs Belong in ANSE
-
-### 1. **Agents Will Use Them Better**
-Your APIs are discoverable, but are they discoverable to LLMs? ANSE exposes them as first-class capabilities with:
-- Full schemas (inputs, outputs, errors)
-- Rate limits and safety constraints
-- Sensitivity labels ("this is risky")
-- Cost hints ("this is expensive")
-
-Agents learn to use them optimally.
-
-### 2. **You Get Compliance for Free**
-- ✅ Immutable audit logs (SHA256 signed)
-- ✅ User attribution (who called what, when)
-- ✅ Non-repudiation (agent can't deny it called your API)
-- ✅ Replay capability (debug any incident)
-
-### 3. **Safety is Built-In**
-- ✅ Per-agent rate limits (prevent abuse)
-- ✅ Resource quotas (prevent runaway costs)
-- ✅ Approval gates (humans approve risky operations)
-- ✅ Sandboxed execution (agents can't escape)
-
-### 4. **Your Investment Pays Off Across Models**
-Register once → works with Claude, GPT-4, Llama, any LLM that supports tool use. Your APIs are model-agnostic.
-
-### 5. **Sim→Real Transfer**
-- Train agents in simulation (safe, cheap)
-- Deploy to production (same code, real data)
-- Zero friction: APIs are identical
-
----
-
-
-
-### Core Capabilities
-
-| Feature | Impact |
-|---------|--------|
-| **Tool‑First API** | Discoverable, schema‑driven capabilities (`capture_frame`, `record_audio`, `say`, `list_devices`). Agents see what's possible and choose. |
-| **Agent Autonomy** | Agents decide which tools to call; the engine enforces semantics and safety, not the developer. |
-| **Deterministic Runtime** | Tick scheduler and JSONL event logs for replayable experiments and reproducible debugging. |
-| **LLM Ready** | Function‑calling adapter pattern with example agents for Claude, GPT, and open models. |
-| **Local & Auditable** | Immutable event logs with SHA256 hashing for full provenance; no external dependencies. |
-| **Minimal Safety Primitives** | Per‑agent permission scopes, rate limits, and human approval hooks without micromanagement. |
-| **Simulated Sensors** | Identical APIs for simulated devices to enable offline training before granting hardware scopes. |
-| **WebSocket Bridge** | Language‑agnostic JSON‑RPC interface so agents can be Python, Node.js, Go, or any HTTP client. |
-
----
-
-## Available Tools
-
-### Hardware Tools
-
-| Tool | Purpose | Rate Limit | Max Input |
-|------|---------|-----------|-----------|
-| `capture_frame()` | Capture an RGB frame from a camera | 30 calls/min | — |
-| `record_audio(duration_sec)` | Record microphone audio for a duration | 10 calls/min | 60 sec |
-| `say(text)` | Produce speech via local TTS | 20 calls/min | 1000 chars |
-| `list_cameras()` | Enumerate available camera devices | — | — |
-| `list_audio_devices()` | Enumerate microphones and speakers | — | — |
-| `get_voices()` | List available TTS voices | — | — |
-
-### Optional / Simulated Tools
-
-| Tool | Purpose |
-|------|---------|
-| `transcribe(audio_id)` | STT helper returning text (if audio model loaded) |
-| `simulate_camera()` | Generate procedural test frames (for training agents offline) |
-| `simulate_microphone(text)` | Inject synthetic audio clips (for validation) |
+## What Is ANSE?
+
+ANSE is an open-source **local agent engine** providing:
+
+- **📸 Camera tools** — capture frames, analyze edges/corners/colors
+- **🎤 Audio tools** — record audio, analyze frequencies and amplitude
+- **🔊 TTS tools** — text-to-speech with multiple voices
+- **🔌 Plugin system** — add custom sensors via YAML or Python
+- **🔒 Safety** — rate limiting, permission scopes, audit logging
+- **♻️ Simulation mode** — deterministic offline testing without hardware
+- **🎛️ Operator UI** — web dashboard for monitoring + approvals
+- **📝 Audit trail** — immutable event logs with SHA256 hashing
+
+**Build with ANSE if you need:**
+- Agents that capture real sensor data
+- Deterministic training environments (sim-to-real)
+- On-device autonomous systems
+- Tool discovery and autonomous tool use
+- Complete audit trails and reproducibility
 
 ---
 
 ## Quick Start
 
-### 1. Clone and Install
+### Install
 
 ```bash
-git clone https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine.git
+git clone https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine
 cd ANSE-Agent-Nervous-System-Engine
-python -m venv .venv
-
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
 pip install -r requirements.txt
 ```
 
-### 2. Start the Engine
+### Run the Demo (30 seconds)
 
+**Terminal 1 — Start the engine:**
 ```bash
 python -m anse.engine_core
 ```
 
-The engine listens on `ws://127.0.0.1:8765` and is ready for agent connections.
-
-### 3. Run the Scripted Demo
-
-In another terminal:
-
+**Terminal 2 — Run an autonomous agent:**
 ```bash
-python anse/examples/scripted_agent.py
+# With real hardware (camera/mic required)
+python agent_demo.py
+
+# Or with simulated hardware (no hardware needed)
+ANSE_SIMULATE=1 python agent_demo.py
 ```
 
-This example agent captures a frame, records audio, and speaks—all in sequence.
+**What happens:**
+- Agent discovers available tools
+- Captures a frame from camera (or simulated)
+- Analyzes the frame (edge/corner detection, color histogram)
+- Records audio from microphone (or simulated)
+- Analyzes audio (frequency spectrum, RMS, peak amplitude)
+- Speaks a result using text-to-speech
+- Logs everything to audit trail
 
-### 4. Run the LLM Adapter (Simulate Mode)
+---
 
+## Run the Demo
+
+**Terminal 1:**
 ```bash
-python anse/examples/llm_agent_adapter.py --mode=simulate
+python -m anse.engine_core
 ```
 
-This adapter shows how to integrate an LLM (e.g., OpenAI API) with ANSE using simulated sensors (no hardware required).
+**Terminal 2:**
+```bash
+python agent_demo.py
+```
 
-### 5. Where to Look
+**Sample output:**
+```
+✓ Calling capture_frame() → 640×480 RGB image
+✓ Calling analyze_frame() → 9,866 edges | 554 corners | Avg color: BGR(43,52,71)
 
-- **Media files**: Stored in `/tmp/anse` or a configured `out_dir`.
-- **Audit logs**: Check `logs/` for JSONL event records and agent call history.
-- **Documentation**: See `docs/QUICKSTART.md`, `docs/API.md`, and `docs/DESIGN.md` for detailed guidance.
-- **Tests**: Run `pytest tests/ -v` to validate your setup.
+✓ Calling record_audio() → 2.0s @ 16kHz stereo
+✓ Calling analyze_audio() → RMS: 0.0206 | Peak: 0.1689 | Freqs: [223, 219, 212] Hz
+
+✓ Calling say() → "I can see, hear, and speak"
+
+📝 Agent memory: 5 actions logged with timestamps
+```
+
+See [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for implementation details.
+
+---
+
+## Built-In Tools
+
+### Hardware Tools
+
+| Tool | Purpose |
+|------|---------|
+| `capture_frame()` | Capture RGB frame from camera (640×480) |
+| `list_cameras()` | List available camera devices |
+| `analyze_frame(frame_id, frame_path)` | Edge/corner detection, color histogram |
+| `record_audio(duration=2.0)` | Record audio from microphone |
+| `list_audio_devices()` | List microphones and speakers |
+| `analyze_audio(audio_id, audio_path)` | FFT frequency analysis, RMS, peak |
+| `say(text)` | Text-to-speech synthesis |
+| `get_voices()` | List available TTS voices |
+
+### Simulated Tools (for testing without hardware)
+
+| Tool | Purpose |
+|------|---------|
+| `simulate_camera()` | Generate deterministic test frames |
+| `simulate_microphone()` | Generate deterministic test audio |
+| Auto-selected when `ANSE_SIMULATE=1` environment variable is set |
+
+### Plugin System
+
+Add custom sensors and tools by creating YAML or Python files in the `plugins/` directory. See [Plugin Examples](#plugin-examples).
 
 ---
 
 ## Architecture
 
-### Core Components
-
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Agent (LLM / Scripted / RL)            │
+│                    Agent (LLM / Script)                     │
 │                   Connects via WebSocket                    │
 └───────────────────────────┬─────────────────────────────────┘
                             │ JSON-RPC
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    AgentBridge                              │
-│        JSON-RPC/WebSocket Server (127.0.0.1:8765)           │
-├─────────────────────────────────────────────────────────────┤
+│                  AgentBridge (WebSocket)                    │
+│            handles_client() processes requests              │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
 │                    EngineCore                               │
-│    Orchestrator: initializes and coordinates subsystems     │
+│  Initializes and coordinates all subsystems                 │
 ├─────────────────────────────────────────────────────────────┤
-│  ToolRegistry  │  Scheduler  │  RateLimiter  │  Dispatcher  │
-│   (schemas,    │ (tick loop, │  (per-tool    │  (executes   │
-│    metadata)   │  execution) │   quotas)     │   tools)     │
+│  ToolRegistry  │  Scheduler  │  WorldModel  │  Audit Logger │
+│   (tool        │  (execute,  │  (append-only│ (SHA256       │
+│    metadata)   │   rate-limit│   event log) │  hashing)     │
 ├─────────────────────────────────────────────────────────────┤
-│  WorldModel  │  AuditLogger  │  PermissionManager  │ Safety   │
-│ (event store,│  (JSONL logs  │    (scope checks)   │  Policy  │
-│  replay)     │  SHA256 hash) │                     │  (YAML)  │
+│     PermissionManager    │       Safety Policy              │
+│    (scopes, approval)    │      (YAML config)               │
 ├─────────────────────────────────────────────────────────────┤
-│          Tools: Video  │  Audio  │  TTS  │  Simulated       │
-│       (async-safe thread pooling for blocking I/O)          │
-├─────────────────────────────────────────────────────────────┤
-│              Hardware: Cameras, Mics, Speakers              │
+│       Hardware Tools      │     Simulated Tools              │
+│   (video, audio, TTS)     │  (deterministic seeds)           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Component Breakdown
+### Key Components
 
-- **EngineCore** — Main orchestrator. Initializes tool registry, scheduler, world model, audit logger, and agent bridge. Runs the event loop.
-
-- **AgentBridge** — WebSocket server exposing engine methods via JSON-RPC. Handles `list_tools`, `get_tool_info`, `call_tool`, `get_history`, and `ping`.
-
-- **ToolRegistry** — Registers tools with schemas, metadata, and rate-limit hints. Routes calls to appropriate tool adapters.
-
-- **Scheduler** — Tick loop and call execution engine. Enforces per-tool rate limits, queues calls, and reports results.
-
-- **WorldModel** — Append-only JSONL event store. Records all calls, results, and timestamps for replay and reproducibility.
-
-- **AuditLogger** — Structured logging with SHA256 hashing. Stores sanitized call records and agent statistics.
-
-- **Tools** — Async-safe adapters for hardware (video, audio, TTS) and simulated devices. All blocking I/O uses Python `asyncio.to_thread()`.
-
-- **Safety Layer** — Permission enforcement, rate limit checks, and optional human approval for high-risk actions.
+- **EngineCore** — Initializes all subsystems (tools, scheduler, world model, audit logger, agent bridge)
+- **AgentBridge** — WebSocket server handling `list_tools`, `call_tool`, `get_history`, `ping`
+- **ToolRegistry** — Manages tool schemas, metadata, and execution
+- **Scheduler** — Enforces rate limits, queues calls, handles timeouts
+- **WorldModel** — Append-only JSONL event store for replay and reproducibility
+- **AuditLogger** — SHA256-hashed logging of all tool calls with inputs/outputs
+- **PermissionManager** — Enforces per-agent permission scopes from YAML policy
+- **Tools** — Async-safe wrappers for hardware (video, audio, TTS) and simulated devices
 
 ---
 
 ## Design Principles
 
-1. **Expose small, structured results** (IDs and metadata) rather than raw blobs. Agents fetch media by ID only if needed.
-
-2. **Keep the engine local and auditable.** Prefer simulated sensors for training. Raw data stays on the host unless explicitly retained.
-
-3. **Preserve agent choice while enforcing minimal governance.** Agents decide what to do; the engine ensures safety without overreach.
-
-4. **Deterministic and replayable.** Event logs and tick scheduler enable debugging and policy validation.
-
-5. **Make safety transparent.** Audit logs, rate limits, and permission scopes are visible to operators and agents.
+1. **Small, structured results** — Return IDs and metadata, not raw data blobs
+2. **Local and auditable** — No external dependencies; full event trail on disk
+3. **Agent autonomy** — Agents decide what to do; engine enforces safety
+4. **Deterministic** — Event logs + seeded randomness enable replay and reproducibility
+5. **Safe by default** — Rate limits, permission scopes, approval gates
 
 ---
 
-## Safety Essentials
+## Safety & Audit
 
-### High‑Impact Controls
+### Built-In Features
 
-| Control | Purpose |
+| Feature | Details |
 |---------|---------|
-| **Per‑Agent Permission Scopes** | Explicit grants for camera, mic, network, filesystem, and actuators. Deny by default. |
-| **Rate Limits** | Sensible defaults (30, 10, 20 calls/min) to prevent runaway sensing and resource abuse. |
-| **Audit Trail** | Immutable JSONL log with hashed inputs and results for provenance and compliance. |
-| **Local by Default** | Raw media retained locally and ephemeral unless retention is explicitly enabled. |
-| **Human Approval** | Operator tokens required for high‑risk actions (e.g., record_audio, network access). |
+| **Permission Scopes** | Per-agent grants for camera, mic, network, filesystem (deny by default) |
+| **Rate Limiting** | Sensible defaults (30, 10, 20 calls/min) to prevent abuse |
+| **Audit Trail** | Immutable JSONL log with SHA256 hashes for provenance |
+| **Local Storage** | Raw media stored locally; no external data transmission |
+| **Human Approval** | High-risk operations can require operator sign-off |
 
-### Operational Defaults
+### Audit Log Format
 
-- **Dev Mode**: Permissive scopes; all agents can access all tools.
-- **Production Mode**: Explicit permission tokens required per agent and per scope.
-- **Simulated Sensors**: Always available; agents validated in sim mode before hardware access is granted.
-
----
-
-## For Agent Authors
-
-### Integration Pattern
-
-1. **Discover** — Call `list_tools()` to see available capabilities and their schemas.
-
-2. **Plan** — Inspect cost hints, sensitivity metadata, and rate limits. Decide which tools to invoke and in what order.
-
-3. **Call** — Invoke a tool via `call_tool()` and receive a structured result with status, data, and media IDs.
-
-4. **Update** — Incorporate the result into your internal memory or the shared world model.
-
-5. **Repeat** — Continue until the task completes. Use replay logs to debug.
-
-### Best Practices
-
-- **Keep LLM context small.** Only include recent events plus the last tool result. Use `get_history(limit=5)` to avoid context overflow.
-
-- **Treat media as references.** Fetch raw image/audio data by ID only when necessary (e.g., for vision or speech processing).
-
-- **Use sim mode for exploration.** Validate your agent logic with simulated sensors before requesting hardware scopes.
-
-- **Handle errors gracefully.** Structured error envelopes and timeouts are expected. Retry with backoff; don't assume success.
-
-- **Cache tool schemas.** Fetch `get_tool_info()` once and reuse; don't re-query every call.
+```json
+{
+  "timestamp": "2026-02-14T10:30:45.123456Z",
+  "agent_id": "agent-001",
+  "call_id": "call-12345",
+  "tool": "capture_frame",
+  "args_hash": "abc123d...",
+  "result_hash": "def456e...",
+  "status": "success",
+  "duration_ms": 145,
+  "error": null
+}
+```
 
 ---
 
-## For Operators & Researchers
+## Examples
 
-### Deployment
+### Research & Simulation
 
-- **Local development:** Run `python -m anse.engine_core` and connect agents via WebSocket.
-- **Docker:** Containerize the engine with mounted `/dev` for hardware access.
-- **Kubernetes:** Use `init` containers to fetch policies and mount event logs as volumes.
+Train agents in simulation, deploy to hardware (same API):
 
-### Monitoring
+```python
+from anse.engine_core import EngineCore
 
-- **Event logs:** Stream `logs/*.jsonl` to a log aggregator (ELK, Loki, etc.).
-- **Metrics:** Parse logs to extract call frequency, error rates, and resource usage per agent.
-- **Alerts:** Trigger on rate-limit violations, permission denials, and errors.
+# Offline training
+engine = EngineCore(simulate=True)
+agent = MyAgent(engine)
+agent.train(iterations=1000)
 
-### Research & Debugging
+# Deploy to real hardware
+engine = EngineCore(simulate=False)
+agent.run_on_device()
+```
 
-- **Replay experiments:** Restore the world model from event logs and re-run agents with the same inputs.
-- **Policy validation:** Analyze audit logs to verify compliance with approval workflows.
-- **Sim-to-real transfer:** Train agents in `simulate=True` mode, then deploy with hardware access.
+### IoT Device Control
+
+Register custom sensors:
+
+```bash
+# Create plugins/temperature_sensor.yaml
+python -m anse.engine_core
+# Agent now sees and can call: temperature_sensor_read_temp()
+```
+
+### Multi-Agent System
+
+```python
+engine = EngineCore()
+
+agent1 = Agent(agent_id="robot-1", engine=engine)
+agent2 = Agent(agent_id="robot-2", engine=engine)
+
+# Each agent gets isolated quotas and rate limits
+await asyncio.gather(agent1.run(), agent2.run())
+```
+
+---
+
+## Operator UI
+
+Monitor and approve agent actions via web dashboard:
+
+```bash
+cd operator_ui
+pip install -r requirements.txt
+python app.py
+# Visit http://localhost:5000
+```
+
+**Features:**
+- Live agent status dashboard
+- Tool approval forms with scope controls
+- Active token management
+- Real-time event streaming
+- Audit log viewer
+
+---
+
+## Plugin System
+
+### YAML Plugins (5 minutes)
+
+Create `plugins/my_sensor.yaml`:
+```yaml
+name: my_temperature_sensor
+description: Custom temperature sensor
+version: 0.1.0
+
+tools:
+  - name: read_temp
+    description: Read current temperature in celsius
+    handler: |
+      return {
+          'temperature': 23.5,
+          'unit': 'celsius',
+          'timestamp': datetime.now().isoformat()
+      }
+```
+
+Restart the engine — agent can now call `my_temperature_sensor_read_temp()`.
+
+### Python Plugins
+
+```python
+# plugins/my_plugin.py
+import asyncio
+from anse.plugin import SensorPlugin
+
+class MyPlugin(SensorPlugin):
+    name = "my_plugin"
+    description = "Custom plugin"
+    
+    async def read_sensor(self):
+        """Read from custom hardware."""
+        # Your implementation
+        return {"status": "ok", "value": 42}
+```
+
+### Plugin Examples
+
+```
+plugins/
+├── _template_sensor.py              # Python plugin template
+├── _template_sensor.yaml            # YAML template
+├── example_philips_hue.yaml         # Philips Hue smart lights
+├── example_arduino_servo.yaml       # Arduino robot arm
+└── example_modbus_plc.yaml          # Industrial Modbus PLC
+```
+
+See [docs/PLUGINS.md](docs/PLUGINS.md) for complete guide.
 
 ---
 
 ## Project Structure
 
 ```
-anse_project/
-├── anse/
-│   ├── __init__.py
-│   ├── engine_core.py         # Main orchestrator
-│   ├── agent_bridge.py        # WebSocket server
-│   ├── tool_registry.py       # Tool registration & execution
-│   ├── scheduler.py           # Rate limiting & scheduling
-│   ├── world_model.py         # Event persistence (JSONL)
-│   ├── audit.py               # Audit logging with hashing
-│   ├── tools/
-│   │   ├── video.py           # Camera capture (async-safe)
-│   │   ├── audio.py           # Microphone recording (async-safe)
-│   │   └── tts.py             # Text-to-speech (async-safe)
-│   ├── examples/
-│   │   ├── scripted_agent.py  # Simple sequential example
-│   │   └── llm_agent_adapter.py # LLM integration template (OpenAI-ready)
-│   └── safety/
-│       ├── permission.py       # Permission enforcement
-│       └── safety_policy.yaml  # Policy configuration
-├── tests/
-│   ├── test_engine_core.py    # Core engine tests
-│   └── test_tools.py          # Tool integration tests
-├── docs/
-│   ├── DESIGN.md              # Architecture & patterns
-│   ├── API.md                 # Complete API reference
-│   └── QUICKSTART.md          # Quick reference guide
-├── requirements.txt           # Runtime dependencies
-├── requirements-dev.txt       # Dev dependencies (pytest)
-├── pyproject.toml             # Package metadata
-├── README.md                  # This file
-├── LICENSE                    # MIT License
-└── CONTRIBUTING.md            # Contribution guidelines
+anse/
+├── __init__.py
+├── engine_core.py          # Main orchestrator
+├── agent_bridge.py         # WebSocket server
+├── tool_registry.py        # Tool management
+├── scheduler.py            # Rate limiting & scheduling
+├── world_model.py          # Event store (JSONL)
+├── audit.py                # Audit logging with hashing
+├── health.py               # Health monitoring
+├── diagnostics.py          # Diagnostic endpoints
+├── multiagent.py           # Per-agent quotas
+├── plugin_loader.py        # Plugin system
+├── tools/
+│   ├── video.py            # Camera tools (async-safe)
+│   ├── audio.py            # Audio tools (async-safe)
+│   ├── tts.py              # Text-to-speech
+│   ├── analysis.py         # Frame/audio analysis
+│   ├── simulated.py        # Deterministic simulation
+│   └── __init__.py
+├── examples/
+│   ├── scripted_agent.py   # Simple sequential example
+│   └── llm_agent_adapter.py # LLM integration template
+├── safety/
+│   ├── permission.py       # Permission enforcement
+│   └── safety_policy.yaml  # Policy configuration
+└── operator_ui/            # Web dashboard
+    ├── app.py              # Flask backend
+    ├── models.py           # Database models
+    ├── routes/             # API routes
+    ├── templates/          # HTML templates
+    └── static/             # CSS/JS
+tests/
+├── test_engine_core.py
+├── test_tools.py
+├── test_health.py
+├── test_operator_ui.py
+└── ...
+docs/
+├── API.md                  # API reference
+├── DESIGN.md               # Architecture guide
+├── PLUGINS.md              # Plugin development
+└── QUICKSTART.md           # Getting started
 ```
 
 ---
 
-## Dependencies
+## Installation & Testing
 
-### Runtime
+### Requirements
 
-- **websockets** (16.0) — WebSocket protocol for agent communication.
-- **opencv-python** (4.x) — Camera capture.
-- **sounddevice** (0.4.x) — Microphone recording.
-- **soundfile** (0.12.x) — Audio file I/O.
-- **pyttsx3** (2.x) — Text-to-speech.
-- **PyYAML** (6.x) — Policy configuration.
+- Python 3.8+
+- opencv-python
+- sounddevice, soundfile
+- pyttsx3 (text-to-speech)
+- websockets
+- PyYAML
+- (optional) Flask, Flask-SQLAlchemy for Operator UI
 
-### Development
+### Install
 
-- **pytest** (9.x) — Testing framework.
-- **pytest-asyncio** — Async test support.
+```bash
+pip install -r requirements.txt
+```
 
----
-
-## Testing
-
-Run the full test suite:
+### Run Tests
 
 ```bash
 pytest tests/ -v
 ```
 
-**Coverage:**
-- 16 tests across engine, tools, and scheduler.
-- All tests passing on Python 3.11+.
-- Execution time: ~18 seconds.
+### Platform Notes
+
+- **Windows**: May require restarting after OpenCV/sounddevice install
+- **macOS**: Requires microphone permissions
+- **Linux**: May need ALSA/PulseAudio configuration for audio
 
 ---
 
 ## API Reference
 
-### WebSocket Commands
+The engine exposes a WebSocket JSON-RPC interface on `ws://127.0.0.1:8765`.
 
-#### List Tools
+### List Tools
 
 ```json
 {"method": "list_tools"}
 ```
 
-Returns schema and metadata for all available tools.
+Returns all available tools with schemas.
 
-#### Get Tool Info
-
-```json
-{"method": "get_tool_info", "params": {"tool": "capture_frame"}}
-```
-
-Returns detailed schema and cost hints for a single tool.
-
-#### Call Tool
+### Call Tool
 
 ```json
-{"method": "call_tool", 
- "params": {"tool": "say", "args": {"text": "Hello world!"}}}
+{
+  "method": "call_tool",
+  "params": {
+    "agent_id": "my-agent",
+    "call_id": "call-001",
+    "tool": "capture_frame",
+    "args": {}
+  }
+}
 ```
 
-Executes a tool and returns result with status, data, and media IDs.
-
-#### Get History
+### Get History
 
 ```json
 {"method": "get_history", "params": {"limit": 10}}
 ```
 
-Returns recent events from the world model.
+Returns recent events from world model.
 
-#### Ping
+### Health Check
 
 ```json
 {"method": "ping"}
 ```
 
-Health check. Returns engine status and version.
+Returns engine status and version.
 
 ---
 
-## Extending ANSE
+## Troubleshooting
 
-### Add a New Tool
-
-1. Create a tool function in `anse/tools/`:
-
-```python
-import asyncio
-
-async def my_tool(param: str) -> dict:
-    """Description of what your tool does."""
-    # Use asyncio.to_thread() for blocking I/O
-    result = await asyncio.to_thread(blocking_operation, param)
-    return {"status": "success", "data": result}
-```
-
-2. Register in `ToolRegistry`:
-
-```python
-registry.register(
-    "my_tool",
-    my_tool,
-    metadata={
-        "description": "What this does",
-        "sensitivity": "public",  # or "private"
-        "cost": 1.0,
-    }
-)
-```
-
-3. Tool is automatically exposed via WebSocket API.
+| Issue | Solution |
+|-------|----------|
+| Engine won't start | Check port 8765 is free: `netstat -an \| findstr :8765` (Windows), `lsof -i :8765` (macOS/Linux) |
+| Camera not detected | Run `list_cameras()` to verify device availability; check permissions |
+| Audio not recorded | Run `list_audio_devices()`; check microphone permissions |
+| Simulated mode not working | Set `ANSE_SIMULATE=1` environment variable before starting |
+| WebSocket connection refused | Ensure engine is running and firewall allows 8765 |
+| Plugin not loading | Check plugin YAML syntax; restart engine after adding plugin |
 
 ---
 
@@ -986,133 +475,72 @@ registry.register(
 | Metric | Value |
 |--------|-------|
 | WebSocket latency | < 1 ms (local) |
-| Tool execution time | Depends on hardware; see audit logs |
+| Tool execution | Hardware-dependent |
 | Event log write | < 1 ms (JSONL append) |
-| Memory footprint | ~50 MB (engine + tools) |
-| Scalability | 100+ agents per engine instance |
+| Memory footprint | ~50-100 MB (engine + tools) |
+| Agents per engine | 10+ (tested), scales based on quotas |
 
 ---
 
-## Troubleshooting
+## Development Status
 
-| Issue | Solution |
-|-------|----------|
-| Engine won't start | Check port 8765 is available. Run `lsof -i :8765` (macOS/Linux) or `netstat -ano \| findstr :8765` (Windows). |
-| Camera/mic not detected | Verify permissions. Check `list_cameras()` and `list_audio_devices()` output. |
-| Rate limit errors | Check audit logs for call frequency. Increase limits in `safety_policy.yaml` if needed. |
-| Media files not saved | Verify `/tmp/anse` or configured `out_dir` exists and is writable. |
-| WebSocket connection refused | Ensure engine is running on correct host/port. Check firewall rules. |
+**Phase 1 ✅** — Health monitoring, operator UI, simulated sensors  
+**Phase 2 ✅** — Multiagent isolation, LLM adapter template, audit/replay  
+**Phase 3 🔄** — Network tools (http_get, ping), filesystem tools, browser tools (planned)
+
+See [ROADMAP.md](ROADMAP.md) for detailed development plan.
+
+---
+
+## Extending ANSE
+
+### Add a Tool
+
+```python
+# Create tool in anse/tools/my_tools.py
+async def my_tool(param: str) -> dict:
+    """Description of what this tool does."""
+    # Use asyncio.to_thread() for blocking I/O
+    result = await asyncio.to_thread(blocking_operation, param)
+    return {"status": "success", "data": result}
+
+# Register in engine_core.py
+self.tools.register(
+    "my_tool",
+    my_tool,
+    schema={"type": "object", "properties": {...}},
+    description="What this tool does",
+    sensitivity="public"
+)
+```
+
+See [docs/API.md](docs/API.md) for complete examples.
+
+---
+
+## Documentation
+
+- **[Quick Start Guide](docs/QUICKSTART.md)** — Hands-on tutorial
+- **[Architecture & Design](docs/DESIGN.md)** — Deep dive into ANSE internals
+- **[API Reference](docs/API.md)** — Complete tool and method documentation
+- **[Plugin Development](docs/PLUGINS.md)** — Building custom sensors and tools
+- **[Roadmap](ROADMAP.md)** — Future features and development plan
+- **[Autonomous Agent Update](AUTONOMOUS_AGENT_UPDATE.md)** — Implementation details of demo agent
+
+---
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Reporting issues
+- Proposing features
+- Submitting pull requests
 
 ---
 
 ## License
 
 ANSE is released under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting issues, proposing features, and submitting pull requests.
-
----
-
-## Extending ANSE with Plugins
-
-ANSE's **plugin system** lets you add custom sensors, devices, and integrations **without modifying core code**:
-
-### Add a Custom Sensor in 5 Minutes
-
-**1. Create a plugin file** (`plugins/my_sensor.yaml`):
-```yaml
-name: my_temperature_sensor
-description: My smart temperature sensor
-
-tools:
-  - name: read_temp
-    description: Read current temperature
-    handler: |
-      result = {
-          'temperature': 23.5,
-          'unit': 'celsius',
-          'status': 'ok'
-      }
-```
-
-**2. Restart ANSE** — that's it!
-```bash
-python -m anse.engine_core
-```
-
-Your agent can now autonomously call your sensor:
-```
-Agent: "Check the temperature in the room"
-Engine calls: my_temperature_sensor_read_temp()
-Agent sees: temperature is 23.5°C
-```
-
-### For Developers: Python Plugins
-
-Complex integrations? Use Python classes:
-
-```python
-from anse.plugin import SensorPlugin
-
-class PhilipsHue(SensorPlugin):
-    name = "philips_hue"
-    description = "Control Philips Hue smart lights"
-    
-    async def toggle_light(self, light_id: int):
-        """Turn light on/off"""
-        # Your implementation here
-        return {'light_id': light_id, 'state': 'toggled'}
-```
-
-### Real-World Examples
-
-We include complete example plugins:
-- **Philips Hue** smart lights (`example_philips_hue.yaml`)
-- **Arduino robot arm** with servos (`example_arduino_servo.yaml`)
-- **Industrial Modbus PLC** via TCP (`example_modbus_plc.yaml`)
-- **Custom temperature sensor** (`_template_sensor.py`)
-
-### Who Should Use Plugins?
-
-✅ **Non-programmers**: Drop a YAML file, no coding needed  
-✅ **Hardware enthusiasts**: Connect Arduino, Raspberry Pi, IoT devices  
-✅ **Enterprise users**: Integrate with Modbus, SCADA, industrial equipment  
-✅ **API integrations**: Connect cloud services, databases, webhooks  
-
-### What Plugins Can't Do
-
-Plugins run with the same constraints as tools:
-- ❌ Can't modify ANSE core code
-- ❌ Can't bypass safety policies
-- ❌ Can't run infinite loops without yielding
-- ❌ Can't access privileged system resources (unless granted by policy)
-
-### Plugin Examples
-
-```
-# Drop YAML plugins in plugins/ directory
-plugins/
-├── my_zigbee_sensors.yaml      # Zigbee temperature sensors
-├── philips_hue.yaml            # Smart lights
-├── my_robot_arm.py             # Arduino-controlled robot arm
-└── warehouse_plc.yaml          # Industrial Modbus PLC
-```
-
-**[Full plugin documentation →](docs/PLUGINS.md)** | **[Plugin templates →](plugins)**
-
----
-
-## Documentation
-
-- **[PLUGINS.md](docs/PLUGINS.md)** — Complete guide to building plugins (YAML & Python templates, examples, best practices).
-- **[DESIGN.md](docs/DESIGN.md)** — Deep dive into architecture, async patterns, and design decisions.
-- **[API.md](docs/API.md)** — Complete API reference with examples for each tool.
-- **[QUICKSTART.md](docs/QUICKSTART.md)** — Hands-on guide to building your first agent.
-- **[ROADMAP.md](ROADMAP.md)** — Development roadmap v0.2–0.3 (Operator UI, Simulated sensors, Multiagent isolation, LLM adapter).
 
 ---
 
@@ -1131,7 +559,5 @@ If you use ANSE in research, please cite:
 
 ---
 
-**Status:** Production-ready with 16 passing tests.  
-**Python:** 3.11+  
-**Platform:** Windows, macOS, Linux  
-**Last Updated:** February 2026
+**Status:** Active development | **Python:** 3.8+ | **License:** MIT  
+**Platform:** Windows, macOS, Linux | **Last Updated:** February 2026
