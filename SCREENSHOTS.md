@@ -2,7 +2,12 @@
 
 This file documents the ANSE Dashboard UI and shows how the nervous system works in action.
 
-> **Add screenshots here:** Place PNG/JPG files in `docs/screenshots/` folder and reference them below.
+> **📸 Add your screenshots:** 
+> 1. Save PNG/JPG files to `/docs/screenshots/` folder
+> 2. Update `/docs/screenshots/INDEX.md` with filename and description
+> 3. Reference with markdown: `![Description](docs/screenshots/filename.png)`
+
+**Screenshot tracking:** See [docs/screenshots/INDEX.md](docs/screenshots/INDEX.md)
 
 ---
 
@@ -148,35 +153,34 @@ TIME: 12:34:57.150Z (entire cycle: 150ms)
 2. Start dashboard: `cd dashboard && python -m http.server 8002`
 3. Open browser: `http://localhost:8002/`
 4. Let it run for 30 seconds to collect events
-5. Take screenshot of browser (with all panels visible)
+5. Take screenshot of browser (with panels visible)
 
-### Step 2: Save the Screenshot
-```bash
-# Create screenshots directory
-mkdir -p docs/screenshots/
+### Step 2: Save to correct location
+- **Save as:** `/docs/screenshots/sensor-panel.png` (or similar)
+- **Format:** PNG or JPG
+- **Name:** Use descriptive names
 
-# Save screenshot as PNG
-# Name it: 01-sensor-panel.png, 02-actuator-panel.png, etc.
-```
+### Step 3: Update INDEX.md
+1. Open `docs/screenshots/INDEX.md`
+2. Add your screenshot filename and description to the table
+3. Save the file
 
-### Step 3: Reference in This File
+### Step 4: Reference in SCREENSHOTS.md
+Once tracked in INDEX.md, add the image reference here:
 ```markdown
-![Sensor Panel](docs/screenshots/01-sensor-panel.png)
+![Sensor Panel](docs/screenshots/sensor-panel.png)
 ```
 
 ---
 
 ## Screenshots to Add
 
-| Panel | Filename | Description | Status |
-|-------|----------|-------------|--------|
-| **Sensor Panel** | `01-sensor-panel.png` | Distance sensor reading 50cm → approaching | ⏳ Needed |
-| **Actuator Panel** | `02-actuator-panel.png` | Motor state: IDLE, STOPPED, MOVING | ⏳ Needed |
-| **World Model Panel** | `03-world-model-panel.png` | Brain state interpretation | ⏳ Needed |
-| **Reflex Panel** | `04-reflex-panel.png` | Triggered safety rules | ⏳ Needed |
-| **Event Log** | `05-event-log-panel.png` | Chronological event stream | ⏳ Needed |
-| **Full Dashboard** | `06-full-dashboard.png` | Complete UI with all 5 panels | ⏳ Needed |
-| **Dashboard + Events** | `07-dashboard-with-events.png` | Dashboard after 50+ events | ⏳ Needed |
+**See detailed list in:** [`docs/screenshots/INDEX.md`](docs/screenshots/INDEX.md)
+
+Current status:
+- 📁 Directory created: `/docs/screenshots/`
+- 📝 Tracking file ready: `/docs/screenshots/INDEX.md`
+- ⏳ Ready for your screenshots!
 
 ---
 
