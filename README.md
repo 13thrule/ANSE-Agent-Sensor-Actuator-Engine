@@ -97,7 +97,30 @@ python agent_demo.py
 📝 Agent memory: 5 actions logged with timestamps
 ```
 
-See [AUTONOMOUS_AGENT_UPDATE.md](AUTONOMOUS_AGENT_UPDATE.md) for implementation details.
+See [docs/AUTONOMOUS_AGENT_UPDATE.md](docs/AUTONOMOUS_AGENT_UPDATE.md) for implementation details.
+
+---
+
+## Repository Guide
+
+**New to ANSE?** Start here to navigate the repo:
+
+| Folder | Purpose |
+|--------|---------|
+| **[anse/](anse/)** | Core engine: world model, scheduler, tool registry, plugins |
+| **[plugins/](plugins/)** | Sensor, actuator, cognition, and system plugins organized by category |
+| **[examples/](examples/)** | Example implementations and tutorial code |
+| **[docs/](docs/)** | Complete documentation: guides, references, troubleshooting |
+| **[dashboard_ui/](dashboard_ui/)** | Web interface for monitoring agents and the world model |
+| **[operator_ui/](operator_ui/)** | Flask admin dashboard for approvals and audit logs |
+| **[tests/](tests/)** | Unit and integration tests |
+| **[scripts/](scripts/)** | Utility scripts (setup, deployment, debugging) |
+
+**Quick Navigation:**
+- 🚀 [Quick Start](docs/QUICKSTART.md)
+- 📚 [Event-Driven Architecture](docs/EVENT_DRIVEN_ARCHITECTURE.md) — How ANSE works
+- 🔧 [Built Sensors?](plugins/sensors/README.md) | [Built Actuators?](plugins/actuators/README.md)
+- 🧠 [Cognition Plugins?](plugins/cognition/README.md) | [System Plugins?](plugins/system/README.md)
 
 ---
 
@@ -394,60 +417,88 @@ plugins/
 └── example_modbus_plc.yaml          # Industrial Modbus PLC
 ```
 
-See [docs/PLUGINS.md](docs/PLUGINS.md) for complete guide.
+See [docs/PLUGINS.md](docs/PLUGINS.md) for the complete plugin development guide.
 
 ---
 
 ## Project Structure
 
 ```
-anse/
-├── __init__.py
-├── engine_core.py          # Main orchestrator
-├── agent_bridge.py         # WebSocket server
-├── tool_registry.py        # Tool management
-├── scheduler.py            # Rate limiting & scheduling
-├── world_model.py          # Event store (JSONL)
-├── audit.py                # Audit logging with hashing
-├── health.py               # Health monitoring
-├── diagnostics.py          # Diagnostic endpoints
-├── multiagent.py           # Per-agent quotas
-├── plugin_loader.py        # Plugin system
+anse/                                  # Core engine
+├── engine_core.py                    # Main orchestrator
+├── agent_bridge.py                   # WebSocket server
+├── tool_registry.py                  # Tool management
+├── scheduler.py                      # Rate limiting & scheduling
+├── world_model.py                    # Event store (JSONL)
+├── audit.py                          # Audit logging with hashing
+├── health.py                         # Health monitoring
 ├── tools/
-│   ├── video.py            # Camera tools (async-safe)
-│   ├── audio.py            # Audio tools (async-safe)
-│   ├── tts.py              # Text-to-speech
-│   ├── analysis.py         # Frame/audio analysis
-│   ├── simulated.py        # Deterministic simulation
-│   └── __init__.py
+│   ├── video.py                      # Camera tools
+│   ├── audio.py                      # Audio tools
+│   └── tts.py                        # Text-to-speech
 ├── examples/
-│   ├── scripted_agent.py   # Simple sequential example
-│   └── llm_agent_adapter.py # LLM integration template
-├── safety/
-│   ├── permission.py       # Permission enforcement
-│   └── safety_policy.yaml  # Policy configuration
-└── operator_ui/            # Web dashboard
-    ├── app.py              # Flask backend
-    ├── models.py           # Database models
-    ├── routes/             # API routes
-    ├── templates/          # HTML templates
-    └── static/             # CSS/JS
-tests/
+│   ├── event_driven_agent.py         # Reference event-driven implementation
+│   ├── scripted_agent.py             # Simple sequential example
+│   └── llm_agent_adapter.py          # LLM integration template
+└── safety/
+    ├── permission.py                 # Permission enforcement
+    └── safety_policy.yaml            # Policy configuration
+
+plugins/                               # Extensible plugin system
+├── sensors/                          # Sensor plugins
+│   ├── _template_sensor.py           # Python template
+│   ├── _template_sensor.yaml         # YAML template
+│   └── example_*.yaml                # Example hardware
+├── actuators/                        # Actuator plugins (motors, controllers)
+│   └── motor_control/                # Motor control interface
+├── cognition/                        # Higher-level reasoning plugins
+│   ├── body_schema/                  # Spatial self-awareness
+│   ├── long_term_memory/             # Experience storage
+│   └── reward_system/                # Learning & reinforcement
+└── system/                           # Core system plugins
+    ├── reflex_system/                # Fast event-driven reactions
+    └── dashboard_bridge/             # UI integration
+
+examples/                              # Example applications
+├── README.md                         # Guide to examples (coming soon)
+└── (future: full agent examples, tutorials)
+
+docs/                                  # Complete documentation
+├── QUICKSTART.md                     # Getting started
+├── EVENT_DRIVEN_ARCHITECTURE.md      # Nervous system model
+├── EVENT_DRIVEN_CHEATSHEET.md        # Quick reference
+├── MIGRATION_POLLING_TO_EVENTS.md    # Polling→Events guide
+├── IMPLEMENTATION_CHECKLIST.md       # Step-by-step guide
+├── TROUBLESHOOTING_EVENT_DRIVEN.md   # Problem solving
+├── DESIGN.md                         # Architecture deep-dive
+├── API.md                            # API reference
+├── PLUGINS.md                        # Plugin development guide
+├── INSTALLATION.md                   # Setup instructions
+└── (more docs for different topics)
+
+dashboard_ui/                          # Web monitoring dashboard
+├── dashboard.html                    # Main interface
+├── dashboard_client.ts               # WebSocket client
+├── DashboardExample.svelte           # Component template
+└── README.md                         # Status & roadmap
+
+operator_ui/                           # Admin dashboard
+├── app.py                            # Flask backend
+├── models.py                         # Database models
+├── routes/                           # API endpoints
+├── templates/                        # HTML
+├── static/                           # CSS/JS
+└── requirements.txt                  # Dependencies
+
+scripts/                               # Utility scripts
+├── README.md                         # Script guide
+└── (future: setup, deployment, debug tools)
+
+tests/                                 # Unit & integration tests
 ├── test_engine_core.py
 ├── test_tools.py
 ├── test_health.py
-├── test_operator_ui.py
-└── ...
-docs/
-├── API.md                          # API reference
-├── DESIGN.md                       # Architecture guide
-├── EVENT_DRIVEN_ARCHITECTURE.md    # Nervous system model (event-driven patterns)
-├── EVENT_DRIVEN_CHEATSHEET.md      # Quick reference and common operations
-├── IMPLEMENTATION_CHECKLIST.md     # Step-by-step guide for implementing systems
-├── MIGRATION_POLLING_TO_EVENTS.md  # Conversion guide from polling to events
-├── PLUGINS.md                      # Plugin development
-├── QUICKSTART.md                   # Getting started
-└── TROUBLESHOOTING_EVENT_DRIVEN.md # Common issues and solutions
+└── (more test modules)
 ```
 
 ---
@@ -600,14 +651,14 @@ See [docs/API.md](docs/API.md) for complete examples.
 - **[Architecture & Design](docs/DESIGN.md)** — Deep dive into ANSE internals
 - **[API Reference](docs/API.md)** — Complete tool and method documentation
 - **[Plugin Development](docs/PLUGINS.md)** — Building custom sensors and tools
-- **[Roadmap](ROADMAP.md)** — Future features and development plan
-- **[Autonomous Agent Update](AUTONOMOUS_AGENT_UPDATE.md)** — Implementation details of demo agent
+- **[Roadmap](docs/ROADMAP.md)** — Future features and development plan
+- **[Autonomous Agent Update](docs/AUTONOMOUS_AGENT_UPDATE.md)** — Implementation details of demo agent
 
 ---
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+Contributions welcome! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
 - Reporting issues
 - Proposing features
 - Submitting pull requests
