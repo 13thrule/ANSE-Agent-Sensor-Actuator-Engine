@@ -121,7 +121,7 @@ class EngineCore:
                 schema={
                     "type": "object",
                     "properties": {
-                        "duration_sec": {"type": "number", "default": 2.0, "minimum": 0.1, "maximum": 60},
+                        "duration": {"type": "number", "default": 2.0, "minimum": 0.1, "maximum": 60},
                         "samplerate": {"type": "integer", "default": 16000},
                         "channels": {"type": "integer", "default": 1},
                         "seed": {"type": "integer"}

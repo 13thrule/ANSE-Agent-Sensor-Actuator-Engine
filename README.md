@@ -84,28 +84,35 @@ pip install -r requirements.txt
 
 ### Run the Demo (30 seconds)
 
-**Terminal 1 — Start the engine:**
+**Terminal 1 — Start WebSocket Backend:**
 ```bash
-python -m anse.engine_core
+python backend/websocket_backend.py
+```
+You'll see:
+```
+✓ ANSE Engine initialized
+✓ World Model ready
+✓ WebSocket server running on ws://localhost:8001
+Waiting for connections...
 ```
 
-**Terminal 2 — Run an autonomous agent:**
+**Terminal 2 — Start Dashboard HTTP Server:**
 ```bash
-# With real hardware (camera/mic required)
-python agent_demo.py
-
-# Or with simulated hardware (no hardware needed)
-ANSE_SIMULATE=1 python agent_demo.py
+cd dashboard && python -m http.server 8002
+```
+You'll see:
+```
+Serving HTTP on 0.0.0.0 port 8002 (http://0.0.0.0:8002/) ...
 ```
 
-**What happens:**
-- Agent discovers available tools
-- Captures a frame from camera (or simulated)
-- Analyzes the frame (edge/corner detection, color histogram)
-- Records audio from microphone (or simulated)
-- Analyzes audio (frequency spectrum, RMS, peak amplitude)
-- Speaks a result using text-to-speech
-- Logs everything to audit trail
+**Open Browser:** Go to `http://localhost:8002/`
+
+You'll see real-time panels:
+- **Sensor Panel** — Distance readings (50cm → 5cm → 50cm cycle)
+- **Actuator Panel** — Motor state (IDLE, STOPPED, MOVING)
+- **World Model Panel** — Brain's interpretation
+- **Reflex Panel** — Safety rules triggered
+- **Event Log** — Complete chronological stream of all events
 
 ---
 

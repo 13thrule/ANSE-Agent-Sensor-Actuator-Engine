@@ -189,7 +189,7 @@ simulate_camera.counter = 0
 
 
 async def simulate_microphone(
-    duration_sec: float = 2.0,
+    duration: float = 2.0,
     samplerate: int = 16000,
     channels: int = 1,
     seed: Optional[int] = None,
@@ -201,7 +201,7 @@ async def simulate_microphone(
     for testing without requiring audio hardware.
     
     Args:
-        duration_sec: Recording duration
+        duration: Recording duration in seconds
         samplerate: Sample rate (for compatibility, uses 16000)
         channels: Number of channels (for compatibility, uses mono)
         seed: Random seed for reproducibility (if None, uses counter)
@@ -210,18 +210,18 @@ async def simulate_microphone(
         Audio metadata dict matching real record_audio response
     """
     # Validate inputs
-    if duration_sec < 0.1:
+    if duration < 0.1:
         return {
             "status": "error",
             "error": "duration_too_short",
-            "message": f"Duration must be at least 0.1s, got {duration_sec}s"
+            "message": f"Duration must be at least 0.1s, got {duration}s"
         }
     
-    if duration_sec > 60:
+    if duration > 60:
         return {
             "status": "error",
             "error": "duration_too_long",
-            "message": f"Duration must be at most 60s, got {duration_sec}s"
+            "message": f"Duration must be at most 60s, got {duration}s"
         }
     
     if seed is None:
@@ -229,12 +229,12 @@ async def simulate_microphone(
         simulate_microphone.counter += 1
     
     try:
-        audio_bytes = _generate_procedural_audio("", duration_sec, seed)
+        audio_bytes = _generate_procedural_audio("", duration, seed)
         
         return {
             "status": "success",
             "format": "wav",
-            "duration_sec": duration_sec,
+            "duration": duration,
             "samplerate": 16000,
             "channels": 1,
             "audio_id": f"sim-audio-{seed}",
@@ -242,7 +242,7 @@ async def simulate_microphone(
             "metadata": {
                 "simulated": True,
                 "seed": seed,
-                "requested_duration": duration_sec,
+                "requested_duration": duration,
             }
         }
     except Exception as e:
