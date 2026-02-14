@@ -98,18 +98,16 @@ class GUIDemoBackend:
         """Send current state snapshot to one client or all clients."""
         state = {
             "timestamp": datetime.now().isoformat(),
-            "sensor": {
-                "type": "distance",
-                "distance_cm": self.distance,
+            "sensors": {
+                "distance": round(self.distance, 1),
                 "safe": self.distance > 10
             },
-            "actuator": {
-                "type": "movement",
-                "state": self.movement_state
+            "actuators": {
+                "movement": self.movement_state
             },
-            "recent_events": self.world_model.get_recent(10) if self.world_model else []
+            "reflexes": []
         }
-        message = json.dumps({"type": "state_snapshot", "data": state})
+        message = json.dumps({"type": "state_update", "data": state})
         
         target_clients = [websocket] if websocket else self.clients
         for client in target_clients:
@@ -120,12 +118,34 @@ class GUIDemoBackend:
                 pass  # Connection closed, that's fine
     
     async def broadcast_world_model_event(self, event_dict: dict):
-        """Broadcast a world model event to all connected clients."""
-        message = json.dumps({
-            "type": "world_model_event",
-            "timestamp": datetime.now().isoformat(),
-            "event": event_dict
-        })
+        """Broadcast a world model event to all connected clients in GUI format."""
+        event_type = event_dict.get("type", "unknown")
+        
+        # Convert to GUI message format
+        if event_type == "sensor_reading":
+            message = json.dumps({
+                "type": "sensor_event",
+                "timestamp": event_dict.get("timestamp"),
+                "data": event_dict
+            })
+        elif event_type == "reflex_triggered":
+            message = json.dumps({
+                "type": "reflex_event",
+                "timestamp": event_dict.get("timestamp"),
+                "data": event_dict
+            })
+        elif event_type == "actuator_action":
+            message = json.dumps({
+                "type": "actuator_event",
+                "timestamp": event_dict.get("timestamp"),
+                "data": event_dict
+            })
+        else:
+            message = json.dumps({
+                "type": "state_update",
+                "timestamp": event_dict.get("timestamp"),
+                "data": event_dict
+            })
         
         if self.clients:
             await asyncio.gather(
