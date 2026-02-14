@@ -111,15 +111,18 @@ class ANSEWebSocketBackend:
     async def broadcast_to_clients(self, message: dict, target=None):
         """Send a message to one client or all connected clients."""
         message_json = json.dumps(message)
-        target_clients = [target] if target else self.clients
+        target_clients = [target] if target else list(self.clients)
+
+        async def send_to_client(client):
+            try:
+                await client.send(message_json)
+            except Exception:
+                # Client disconnected or error sending - remove it
+                self.clients.discard(client)
 
         if target_clients:
             await asyncio.gather(
-                *[
-                    client.send(message_json)
-                    for client in target_clients
-                    if client and not client.closed
-                ],
+                *[send_to_client(client) for client in target_clients],
                 return_exceptions=True
             )
 
