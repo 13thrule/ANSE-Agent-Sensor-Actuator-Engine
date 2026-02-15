@@ -44,4 +44,4 @@ async def process_world_model_update(event):
         )
 ```
 
-See [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for the nervous system model.
+See [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for how state and events flow.

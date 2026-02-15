@@ -50,4 +50,4 @@ System plugins have direct access to:
 - `agent_bridge` - Communication with agents
 - `tool_registry` - Available tools
 
-See [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for the nervous system model.
+See [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for how state and events flow.

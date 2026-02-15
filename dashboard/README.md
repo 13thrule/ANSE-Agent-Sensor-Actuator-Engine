@@ -1,6 +1,6 @@
 # ANSE Dashboard
 
-**Production-Ready Real-Time Monitoring Dashboard for ANSE (Agent Nervous System Engine)**
+**Production-Ready Real-Time Monitoring Dashboard for ANSE (Agent State & Event Engine)**
 
 The ANSE Dashboard is a plugin-driven web interface that provides real-time visibility into the ANSE agent's perception, decision-making, and actions. It dynamically creates panels for active sensors, actuators, reflexes, and world model state.
 
@@ -31,7 +31,7 @@ The ANSE Dashboard is a plugin-driven web interface that provides real-time visi
    - State transition history with duration tracking
    - Smooth animations on state changes
 
-3. **World Model Panel** - Interpreted brain state
+3. **State Panel** - Current hardware state
    - Current sensor readings
    - Safety status (SAFE/DANGER)
    - Active actuator state
@@ -40,10 +40,10 @@ The ANSE Dashboard is a plugin-driven web interface that provides real-time visi
    - Color-coded safety (green/red)
    - State history (last 10 snapshots)
 
-4. **Reflexes Panel** - Trigger tracking
-   - Active reflexes with trigger conditions
-   - Recent reflex history
-   - Trigger count per reflex
+4. **Rules Panel** - Validation and action tracking
+   - Active rules with conditions
+   - Recent rule history
+   - Trigger count per rule
    - Time duration in current state
 
 5. **Event Log Panel** - System event stream
@@ -373,4 +373,4 @@ To contribute improvements, panels, or features:
 
 ---
 
-**ANSE Dashboard** - Making agent nervous systems visible, understandable, and debuggable.
+**ANSE Dashboard** - Real-time visualization of agent-hardware state and event flow.

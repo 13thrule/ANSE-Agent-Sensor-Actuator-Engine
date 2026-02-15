@@ -221,7 +221,7 @@ class ExampleTemperatureSensor(SensorPlugin):
 #
 # EVENT-DRIVEN ARCHITECTURE
 # ==========================
-# ANSE is a nervous system, not a monitoring system:
+# ANSE is a state-driven control relay, not a passive monitoring system:
 # - Tools are endpoints called ON-DEMAND (by agents or reflexes)
 # - Do NOT create polling loops or background threads
 # - DO emit events when sensor readings change/arrive

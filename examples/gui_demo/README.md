@@ -1,10 +1,10 @@
-# ANSE GUI Demo — Real-Time Nervous System Visualization
+# ANSE GUI Demo — Real-Time State & Event Visualization
 
 A minimal but **completely real** demonstration of ANSE's event-driven architecture.
 
 **No simulation toys. No toy WebSockets. This connects directly to ANSE's world model, reflexes, and actuators.**
 
-## Quick Test: See the Nervous System Working
+## Quick Test: See the State & Event System Working
 
 Want to see it work first, without the GUI?
 
@@ -13,7 +13,7 @@ cd examples/gui_demo
 python demo_simple.py
 ```
 
-This shows the **three phases of the nervous system**:
+This shows how ANSE processes **state transitions and events in real-time**:
 1. **SENSOR**: Distance readings gradually approaching (50→5cm)
 2. **REFLEX**: Proximity alarm triggers when too close (< 10cm)
 3. **ACTUATOR**: Movement control responds (IDLE → STOPPED → MOVING)
@@ -32,7 +32,7 @@ All 24 events recorded to ANSE world model. ✅
 
 ## What This Demo Shows
 
-The dashboard visualizes ANSE as a nervous system in real time:
+The dashboard visualizes ANSE state and event flow in real time:
 
 - **📡 Sensor Input** — Live sensor readings (temperature, motion, light)
 - **🌍 World Model** — Current state of the agent's environment
@@ -284,7 +284,7 @@ The same code works for both simulated and real hardware. That's the power of AN
 
 ## Next Steps
 
-- Explore [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for how the nervous system works
+- Explore [EVENT_DRIVEN_ARCHITECTURE.md](../../docs/EVENT_DRIVEN_ARCHITECTURE.md) for how state and events flow
 - Check [IMPLEMENTATION_CHECKLIST.md](../../docs/IMPLEMENTATION_CHECKLIST.md) to build real agents
 - Look at plugin examples in [plugins/sensors/](../../plugins/sensors/)
 

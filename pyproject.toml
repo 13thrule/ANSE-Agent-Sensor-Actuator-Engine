@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "anse"
 version = "0.1.0"
-description = "Agent Nervous System Engine - Toolbox for AI agents with sensors and actuators"
+description = "Agent State & Event Engine - Control relay for agents with sensor validation and safety rules"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [

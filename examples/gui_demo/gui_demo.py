@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""ANSE GUI Demo - Real Nervous System in Action
+"""ANSE GUI Demo - Real State & Event System in Action
 
-Shows ANSE as a true event-driven nervous system:
+Shows ANSE as a true state-driven event system:
 - Distance sensor emits readings to world model
 - Reflex monitors world model for conditions
 - Actuator responds to reflex triggers
 - All events broadcast to GUI via WebSocket
 
-One sensor, one reflex, one actuator. Complete nervous system flow.
+One sensor, one rule, one actuator. Complete state-event flow.
 """
 
 import asyncio
@@ -39,7 +39,7 @@ class GUIDemoBackend:
     """
     ANSE GUI Demo Backend
     
-    Real event-driven nervous system:
+    State-driven event-based system:
     - Sensor emits readings to world model
     - Reflex monitors world model for conditions
     - Actuator responds to reflex triggers
@@ -201,7 +201,7 @@ class GUIDemoBackend:
         """
         Simulate a distance sensor that emits readings.
         
-        This is the SENSOR phase of the nervous system:
+        This is the SENSOR phase (state input):
         Sensor > World Model
         """
         print("[SENSOR] Starting distance sensor simulation...")
@@ -230,7 +230,7 @@ class GUIDemoBackend:
                 "safe": self.distance > 10
             })
             
-            # Check reflexes (REFLEX phase of nervous system)
+            # Check rules (RULE VALIDATION phase)
             await self.check_and_trigger_reflexes()
             
             # Send updated state snapshot
@@ -247,7 +247,7 @@ class GUIDemoBackend:
         """
         Check sensor conditions and trigger reflexes.
         
-        This is the REFLEX phase of the nervous system:
+        This is the RULE VALIDATION phase:
         World Model > Reflex Check > Actuator Action
         """
         
