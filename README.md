@@ -1,15 +1,13 @@
-# ANSE — Agent Nervous System Engine
+# ANSE — Autonomous Agent Control System
 
 ![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![Tests Passing](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 ![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
-**A local runtime that connects an AI agent's decisions to real hardware — safely.**
+**A control scaffold that decouples agent logic from hardware constraints.**
 
-ANSE is a deterministic event loop for autonomous agents. It reads from sensors, stores state, runs safety rules, and controls actuators. Your LLM, script, or controller connects over WebSocket and tells the hardware what to do. ANSE enforces constraints and keeps an immutable audit trail.
-
-Think: **Llama + temperature sensor + smart home = ANSE.**
+ANSE is an event relay and state manager for autonomous agents. It reads sensors, maintains state, enforces safety rules, and controls actuators. External agents (LLMs, scripts, controllers) connect via WebSocket and issue commands. ANSE validates all commands against safety rules and logs everything for audit.
 
 ---
 
@@ -25,158 +23,118 @@ Right now you either:
 - Use a closed-platform (expensive, limited flexibility)
 - Build your own orchestration (6 months of engineering)
 
-**ANSE removes the boilerplate.** It's a drop-in nervous system that decouples your agent brain from your hardware body.
+**ANSE removes the boilerplate.** It's a control scaffold that decouples your agent from the hardware constraints.
 
 ---
 
-## 🎯 How It Works in 30 Seconds
+## How It Works
 
 ```
-1. Define hardware: sensors (temperature, motion) and actuators (fan, heater)
-2. Define safety rules: "IF motion==false THEN fan=OFF" (even if agent says on)
-3. Connect an LLM: Over WebSocket, LLM reads state and sends commands
-4. ANSE enforces rules: Reflexes approve/deny commands before execution
-5. Everything is logged: Immutable audit trail for every decision and outcome
+1. Define hardware: sensors and actuators
+2. Define safety rules: "if motion==false, deny fan"
+3. Connect your agent via WebSocket
+4. ANSE validates all commands against rules
+5. All events logged
 ```
 
-**Real-world example:**
+**Example:**
 
-```
-Hardware setup:
-  - Temperature sensor (27°C right now)
-  - Motion detector (no motion)
-  - Smart fan (currently off)
-  - Local LLM (Claude, Llama, Mistral)
+You have: temperature sensor, motion sensor, smart fan, local LLM.
 
-Safety rule:
-  IF motion_detected == false → fan MUST stay OFF
-  (protects empty house from wasteful cooling)
+Rule: "Don't run fan when house is empty (motion==false)."
 
-What happens:
-  1. LLM observes: temperature=27, motion=false, fan=off
-  2. LLM decides: "House is warm but empty, turn on fan"
-  3. LLM sends: {actuator: "fan", command: "on"}
-  4. ANSE checks safety rules: motion==false
-     → REFLEX BLOCKS THE COMMAND
-  5. Log entry: "Agent requested fan on, but reflex denied: presence required"
-  6. LLM receives rejection, understands constraint, waits for motion
-  7. Later: motion detected → reflex allows fan
-  
-Result:
-  ✓ Safety rule enforced (agent can't override)
-  ✓ Agent learned the constraint (audited decision chain)
-  ✓ No silent failures (everything logged)
-  ✓ Hardware and brain are decoupled (easy to test, easy to swap)
-```
+Sequence:
+1. LLM reads state: temp=27C, motion=false, fan=off
+2. LLM sends: "turn on fan"
+3. ANSE checks rule → motion==false → command rejected
+4. Log: "fan denied: motion_required"
+5. LLM reads rejection, adjusts logic, waits
+6. Motion detected → LLM retries → fan allowed
 
-**Key insight:**  
-ANSE is not smart about what to do. **ANSE is strict about how to do it safely.**
+Result: Safety enforced, agent learns constraints, everything audited.
 
 ---
 
-## ⚠️ What ANSE Is NOT
-
-Before you read further, clear your head:
+## What ANSE Is NOT
 
 ANSE is **NOT**:
 - A Vision-Language-Action (VLA) model
 - A robotics brain or motion planner
-- A predictive or learned world model  
+- A learned or predictive world model
 - An embodiment solution for LLMs
-- A system that turns natural language into robot motion
-- An AGI or general-purpose AI research project
-- A complete autonomous system by itself (you need a brain)
+- A system that turns natural language into motion
+- An AGI or AI research project
+- A complete autonomous system
 
-**What ANSE *is*:**
-- A deterministic event loop (sensors → state → reflexes → actuators)
-- A WebSocket API for external agents to read/write
-- A safety layer (hard rules, always enforced)
-- An audit trail (immutable logs, zero surprise failures)
+**What ANSE is:**
+- An event relay connecting sensors to state and state to actuators
+- A command validator (checks commands against safety rules)
+- A scaffold for decoupling agent logic from hardware constraints
+- An audit logger (immutable event trail)
 
-**The "state" is not a learned world model.** It's a simple, timestamped dictionary (JSON) that tracks sensor readings and actuator states. No neural networks. No learning. Fully auditable.
-
-For deeper clarification, see [WHAT_ANSE_IS.md](WHAT_ANSE_IS.md).
+**The state store is not a "world model".** It's a timestamped JSON record of sensor readings and actuator states. No neural networks, no learning, fully auditable.
 
 ---
 
-## 📐 Architecture: A Single Diagram
+## Architecture
 
 ```
-     LLM / Agent Brain      (you bring this)
-            ↓ ws://localhost:8001
-            
-    ┌─────────────────────────────┐
-    │   ANSE Nervous System       │
-    │                             │
-    │  Sensor Inputs              │
-    │  ↓                          │
-    │  State Dictionary           │  ← Just a timestamped JSON store
-    │  ↓                          │
-    │  Safety Reflexes (YAML)     │  ← Hard rules, always enforced
-    │  ↓                          │
-    │  Actuator Output            │
-    │                             │
-    └─────────────────────────────┘
-            ↓
-     Hardware (temp sensor, fan, 
-     motion detector, etc.)
+External Agent (LLM, script, controller)
+        ↕ WebSocket
+        
+┌─────────────────────────────┐
+│   ANSE Control Scaffold     │
+│                             │
+│ • Sensor Input              │
+│ • State Store (JSON)        │
+│ • Safety Rules (YAML)       │
+│ • Actuator Output           │
+│                             │
+└─────────────────────────────┘
+        ↓
+    Hardware
 ```
 
-**Data flow:**
-- **Sensors** push data into the state dictionary (real-time updates)
-- **Agent** connects to WebSocket, reads state, sends commands
-- **Reflexes** auto-approve or auto-deny commands before execution
-- **Audit logger** records every event with SHA256 checksums
-- **Dashboard** visualizes state and events in real-time (optional)
+**How it works:**
+- Sensors write to the state store
+- Agent connects via WebSocket, reads state, sends commands
+- Safety rules validate all commands
+- Approved commands go to actuators
+- All events logged with checksums
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Install
-
+Install:
 ```bash
 git clone https://github.com/13thrule/ANSE-Agent-Nervous-System-Engine
 cd ANSE-Agent-Nervous-System-Engine
 pip install -r requirements.txt
 ```
 
-### Run the Demo (< 2 minutes)
-
-**Terminal 1 — Start ANSE Backend:**
+Run the backend:
 ```bash
 python backend/websocket_backend.py
 ```
-You'll see:
-```
-✓ ANSE Engine initialized
-✓ WebSocket server running on ws://localhost:8001
-Waiting for agent connections...
-```
+Listens on ws://localhost:8001
 
-**Terminal 2 — Start Dashboard:**
+(Optional) Run the dashboard:
 ```bash
 cd dashboard && python -m http.server 8002
 ```
-
-**Open Browser:** `http://localhost:8002/`
-
-You'll see 5 real-time panels:
-- **Sensors** — Live readings (distance, temperature, etc.)
-- **State** — What ANSE thinks the world looks like
-- **Reflexes** — Which safety rules just fired
-- **Actuators** — Motor commands executed
-- **Log** — All events, timestamped and hashed
+Open http://localhost:8002/ to visualize events.
 
 ---
 
-## 🧠 Core Concepts (2-minute read)
+## Core Concepts
 
-### Sensors
-Input devices (camera, microphone, temperature sensor, motion detector, network call, etc.). Emit events in real-time. ANSE provides plugins for common sensors; you can add custom ones.
+**Sensors**
+Input devices (cameras, microphones, temperature sensors, motion detectors, network calls, etc.) that emit events in real-time.
 
-### State Dictionary
-A simple, timestamped JSON object that ANSE maintains. Every sensor reading updates it. Agents read this to understand the world. Example:
+**State Store**
+A timestamped JSON object maintained by ANSE. Sensors write to it, agents read it.
+
 ```json
 {
   "timestamp": "2026-02-15T12:34:56Z",
@@ -192,103 +150,70 @@ A simple, timestamped JSON object that ANSE maintains. Every sensor reading upda
 }
 ```
 
-### Reflexes
-Hardcoded safety rules (written in YAML). They run after every state update. They can:
-- Auto-execute actuator commands (fans spin up on temperature spike)
-- Block agent commands (agent says on, reflex says no)
-- Trigger alerts (if temperature > 45°C, send warning)
+**Reflexes**
+Safety rules defined in YAML. They run after each state update and can:
+- Block commands: "if motion==false, deny fan"
+- Auto-trigger: "if temp > 40C, turn on fan immediately"
+- Emit alerts: "if pressure > 100psi, send alert"
 
-Reflexes **always win**. Agent commands are suggestions; reflexes are law.
+Rules always execute before commands reach actuators.
 
-### Actuators
-Output devices (motor, heater, smart plug, siren, etc.). Agents or reflexes tell them what to do. Everything is logged.
+**Actuators**
+Output devices: motors, heaters, plugs, sirens, etc. Controlled by commands or reflexes. All operations logged.
 
-### Agent API (WebSocket)
-Agents connect to `ws://localhost:8001` and:
-- Receive state updates in real-time
-- Send action commands: `{type: "actuator_action", actuator: "fan", state: "on"}`
-- Observe reflex decisions in the event log
-- Learn from rejections and adapt
+**Agent API**
+Agents connect to ws://localhost:8001 and:
+- Receive state updates
+- Send commands: `{type: "actuator_action", actuator: "fan", state: "on"}`
+- Observe rejections in the event log
+- Adapt behavior based on feedback
 
 ---
 
-## ✅ Project Status
+## Project Status
 
-**ANSE v0.3 Beta** — Core engine and tools are stable and production-ready.
+ANSE v0.3 — Core engine and tools are stable and production-ready.
 
 | Component | Status |
 |-----------|--------|
 | **Core Event Loop** | ✅ Complete |
-| **Sensor Plugins** | ✅ Complete (7 tools: camera, audio, TTS, analysis, network, filesystem, simulated) |
-| **Safety Reflexes** | ✅ Complete |
+| **Sensor Plugins** | ✅ Complete (7 tools) |
+| **Safety Rules** | ✅ Complete |
 | **Actuator Control** | ✅ Complete |
 | **WebSocket API** | ✅ Complete |
 | **Dashboard** | ✅ Complete |
 | **Audit Logging** | ✅ Complete |
-| **Documentation** | ✅ Complete (23 guides, 2,500+ lines) |
-| **Tests** | ✅ Complete (111+ tests passing) |
-| **Examples** | ✅ Complete (4 agent examples) |
+| **Documentation** | ✅ Complete |
+| **Tests** | ✅ Complete (111+ passing) |
+| **Examples** | ✅ Complete (4 examples) |
 
-**What's ready to deploy:** Everything above. Core architecture is stable and tested.
-
-**What's being refined:** Extended examples, performance optimization, deployment templates.
-
-**What's planned (Phase 4):** Browser automation tools, SDR/robot interface tools, benchmark suite.
-
-> 📋 **See [AUDIT_REPORT_FEB_2026.md](AUDIT_REPORT_FEB_2026.md)** for a detailed grounded audit of what's actually implemented.
+Ready to deploy. See [AUDIT_REPORT_FEB_2026.md](AUDIT_REPORT_FEB_2026.md) for details.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
-- **[WHAT_ANSE_IS.md](WHAT_ANSE_IS.md)** — Why ANSE exists and what problems it solves
-- **[QUICK_START.md](docs/QUICKSTART.md)** — Step-by-step walkthrough (10 minutes)
-- **[API.md](docs/API.md)** — Complete WebSocket message reference
-- **[ARCHITECTURE.md](docs/DESIGN.md)** — Deep dive into nervous system design
-- **[PLUGINS.md](docs/PLUGINS.md)** — How to write custom sensors and actuators
-- **[AUDIT_REPORT_FEB_2026.md](AUDIT_REPORT_FEB_2026.md)** — What's actually implemented
-- **[PHASE_4_ROADMAP.md](PHASE_4_ROADMAP.md)** — Next steps and timeline
+## Documentation
+
+- [WHAT_ANSE_IS.md](WHAT_ANSE_IS.md) — Project rationale
+- [QUICK_START.md](docs/QUICKSTART.md) — Step-by-step guide
+- [API.md](docs/API.md) — WebSocket API reference
+- [ARCHITECTURE.md](docs/DESIGN.md) — System design
+- [PLUGINS.md](docs/PLUGINS.md) — Extending ANSE
+- [AUDIT_REPORT_FEB_2026.md](AUDIT_REPORT_FEB_2026.md) — Implementation status
+- [PHASE_4_ROADMAP.md](PHASE_4_ROADMAP.md) — Future work
 
 ---
 
-## 🎨 Visual Dashboard — Real-Time Nervous System Monitoring
+## Dashboard
 
-ANSE includes a **production-ready web dashboard** that streams real-time events from the nervous system.
+Optional web-based UI for monitoring ANSE state and events.
 
-### See It In Action
-
-![ANSE Demo GUI - Complete nervous system visualization with event streaming](docs/screenshots/01-full-dashboard.png)
-
-### Dashboard Features
-
-**5 Real-Time Panels:**
-- **Sensor Panel** — Distance sensor readings (50cm → 5cm → 50cm cycle)
-- **Actuator Panel** — Motor state (IDLE, STOPPED, MOVING)
-- **World Model Panel** — Brain's interpretation of the world
-- **Reflex Panel** — Safety rules triggered (proximity_safeguard, clear_to_move)
-- **Event Log** — Complete chronological stream of all events
-
-![Real-time event log streaming sensor, reflex, and actuator events](docs/screenshots/02-event-log-detail.png)
-
-### Run the Dashboard (30 seconds)
-
-**Terminal 1 — Start WebSocket Backend:**
-```bash
-python backend/websocket_backend.py
-```
-
-You'll see:
-```
-✓ ANSE Engine initialized
-✓ World Model ready
-✓ WebSocket server running on ws://localhost:8001
-Waiting for connections...
-```
-
-**Terminal 2 — Start Dashboard HTTP Server:**
+Run the dashboard:
 ```bash
 cd dashboard && python -m http.server 8002
 ```
+Open http://localhost:8002/
 
 You'll see:
 ```

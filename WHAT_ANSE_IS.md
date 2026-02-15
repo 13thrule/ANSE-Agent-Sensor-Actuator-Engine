@@ -1,51 +1,44 @@
 # What ANSE Actually Is
 
-## The Clarity Section
+ANSE is a control scaffold — not a brain, not an AI system, not a world model.
 
-**ANSE is the body, not the brain.**
+It's an event relay and state manager for autonomous agents.
 
-ANSE is a deterministic runtime that implements a nervous system for autonomous systems. It connects sensors, enforces safety rules, manages state, and controls actuators through a WebSocket API that external agents (LLMs, scripts, controllers) can interface with.
+## What ANSE Does
 
-Think of it this way:
+**It connects three things:**
+1. Sensors (read hardware state)
+2. Agents (make decisions via WebSocket)
+3. Actuators (execute commands)
 
-- **ANSE is the body**: sensors, reflexes, actuators, state storage, safety enforcement, audit logging
-- **Your agent is the brain**: LLM, controller, decision logic, planning
+**It enforces constraints.**
+Safety rules block unsafe commands before they reach actuators.
 
-The agent makes decisions by observing the world through ANSE's WebSocket API. ANSE enforces constraints, logs everything, and keeps the system safe.
-
----
+**It logs everything.**
+Every sensor reading, every command, every decision. Immutable audit trail with checksums.
 
 ## What ANSE Is NOT
 
-ANSE is **not**:
-
-- A Vision-Language-Action (VLA) model or multimodal AI system
+- A Vision-Language-Action (VLA) model
 - A robotics brain or motion planner
-- A predictive or learned world model (no neural networks, no learning)
-- An embodiment framework for LLMs
-- A system that translates natural language into perfect motion
-- An AGI or general-purpose AI research project
+- A learned predictive model
+- An embodiment framework
+- An AGI or AI research project
 
-The "world model" in ANSE is not a research concept. **It is a simple, structured state store**: a timestamped JSON-based record updated by sensor readings and reflex triggers. It is deterministic and auditable.
+The "state store" is not a "world model". It's a timestamped JSON dictionary of sensor readings and actuator states. No learning, no prediction, fully auditable.
 
----
+## What ANSE Actually Provides
 
-## What ANSE Actually Does
-
-ANSE provides:
-
-1. **Sensor integration**: Plugins for cameras, microphones, temperature sensors, network tools, custom hardware
-2. **Event-driven loop**: Sensor → World State Update → Reflex Check → Actuator Execution (all async, all logged)
-3. **Reflex rules**: Hardcoded safety logic that executes instantly (no agent latency)
-4. **Actuator control**: Motor commands, state transitions, constrained operations
-5. **World state**: A deterministic, queryable record of all sensor readings, actuator states, and reflex triggers
-6. **Rate limiting**: Per-tool, per-agent quotas to prevent resource exhaustion
-7. **Permission scopes**: Agents can only access sensors/actuators they're authorized for
-8. **Audit trail**: Immutable JSONL log with SHA256 hashes for non-repudiation
-9. **WebSocket API**: External agents subscribe to events and send constrained commands
-10. **Simulation mode**: Swap real sensors for deterministic test tools; agent code unchanged
-
----
+1. **Sensor integration** — Plugins for standard sensors; custom ones are easy to add
+2. **Event-driven loop** — Sensors → state → rules → actuators (fully logged)
+3. **Safety rules** — YAML-based, execute instantly, block unsafe commands
+4. **Actuator control** — Motor commands, state transitions, constrained operations
+5. **State store** — Current sensor readings and actuator states, queryable
+6. **Rate limiting** — Per-tool, per-agent quotas
+7. **Permission scopes** — Agents access only authorized sensors/actuators
+8. **Audit trail** — Immutable JSONL log, SHA256 checksums
+9. **WebSocket API** — External agents read state and send commands
+10. **Simulation mode** — Swap real sensors for deterministic tests
 
 ## Example: Home Automation
 
@@ -83,85 +76,66 @@ Result:
   - No surprises; no silent failures
 ```
 
-The key insight: **ANSE is not smart about what to do. ANSE is strict about HOW TO DO IT SAFELY.**
+The key principle: **ANSE enforces constraints, not intelligence.**
 
 ---
 
-## Architecture in 100 Words
+## Architecture
 
 ```
 External Agent (LLM / Script / Controller)
         ↕ WebSocket JSON
         
-    ANSE Runtime
+    ANSE Control Scaffold
     ├─ Sensor Plugins
-    │  └─ Emit events (camera, microphone, temperature, network, etc.)
-    ├─ World Model
-    │  └─ Timestamped JSONL event store (deterministic state)
-    ├─ Reflex Engine
-    │  └─ Fast, synchronous rule evaluation (no agent latency)
+    │  └─ Read hardware (camera, microphone, temperature, network, etc.)
+    ├─ State Store
+    │  └─ Timestamped JSON of current state
+    ├─ Rule Engine
+    │  └─ Validate commands against safety rules
     ├─ Actuator Plugins
-    │  └─ Motor commands, state transitions (safety-gated)
-    ├─ Safety Layer
-    │  └─ Rate limits, permission scopes, approval gates
+    │  └─ Write to hardware (motors, relays, LEDs, etc.)
+    ├─ Permission Layer
+    │  └─ Rate limits, access scopes
     └─ Audit Logger
-       └─ Immutable trail (SHA256 signed)
+       └─ Immutable event trail (SHA256 checksums)
 ```
 
-Events flow asynchronously through the pipeline. Everything is logged. Agents react to observing state, not driving it directly.
+Events flow through the pipeline. Everything is logged. Agents observe state, issue commands, and adapt based on approvals/rejections.
 
 ---
 
 ## Why ANSE Exists
 
-Problem it solves:
+You have hardware. You want an external agent to use it safely.
 
-**You have hardware (sensors, actuators). You want an external agent (LLM, controller, script) to use it safely.**
-
-Without ANSE, you end up:
-- Wiring sensor drivers, actuator handlers, and safety logic manually
-- No consistent audit trail
-- Mixing agent logic with hardware logic (hard to test, hard to debug)
-- Racing conditions between agent commands and sensor events
-- No separation between "what the agent wants" and "what is actually safe"
-
-ANSE fixes this by providing:
-- A **deterministic, auditable event loop** (agent-independent)
-- **Pluggable sensors and actuators** (no hand-wiring)
-- **Hardcoded safety rules** that execute before agents influence outcomes
-- **Clear separation**: agent decides what to do; ANSE enforces how it's done
-- **Replayable history**: every sensor reading, every decision, every outcome logged
-- **Same API for testing and production**: swap real sensors for simulated ones
-
-This is especially useful for:
-- Home automation (safety rules for thermostats, locks, appliances)
-- Robotics (reflexes for collision detection, force limits, estop)
-- IoT systems (rate limiting, permission enforcement)
-- Research (reproducible agent-environment interaction)
-- Regulated systems (audit trail for compliance)
+Without ANSE:
+- Manual wiring of sensor drivers, safety logic, actuator handlers
+- No audit trail
+- Agent logic mixed with hardware logic (hard to test, hard to debug)
+- Race conditions between sensors and commands
+- No clear separation: what agent wants vs. what's safe
 
 ---
 
-## When NOT to Use ANSE
+## Use ANSE For
 
-ANSE is not the right tool if you need:
+- Home automation with safety constraints
+- IoT systems with permission enforcement
+- Robotics with hardcoded safety limits
+- Research with reproducible agent-environment interaction
+- Systems requiring audit trails
 
-- Vision-language grounding (use OpenAI Vision, Claude Vision, etc.)
-- Motion planning (use MoveIt, ROS Navigation, etc.)
-- Learned world models (use neural networks, diffusion models, etc.)
-- Real-time perception and control in dynamic environments (use a robotics middleware like ROS)
-- A complete embodied AI stack (ANSE is one piece; you need a brain)
+## Don't Use ANSE For
 
-ANSE is one piece. It assumes you have:
-- Sensor drivers (whether physical or simulated)
-- An external agent (brain) that makes decisions
-- Safety policies you can articulate as rules
-- A local, deterministic environment (no cloud dependencies, no real-time guarantees)
+- Vision-language models (use Claude Vision, OpenAI Vision)
+- Motion planning (use MoveIt, ROS Navigation)
+- Perception systems (use dedicated ML models)
+- Real-time robotics in dynamic environments (use ROS middleware)
+- Anything requiring a learned world model
 
 ---
 
 ## Bottom Line
 
-**ANSE is boring on purpose.** It is a deterministic, auditable runtime that keeps your hardware and agent decoupled. It does one job well: enforce safety and keep a trail of what happened.
-
-If you need to build a system where an external agent controls hardware safely, ANSE removes the boilerplate and lets you focus on the logic that matters.
+ANSE is a boring, purpose-built control scaffold. It decouples agent logic from hardware constraints and keeps an immutable audit trail. Use it when you need safe, decoupled agent-hardware interaction with clear accountability.
