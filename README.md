@@ -49,7 +49,30 @@ ANSE is an open-source **nervous system engine** — the body for your agent bra
 - They talk over WebSocket (ws://localhost:8001)
 - The dashboard is just a visualizer
 
-**What ANSE Provides:**
+---
+
+## ⚠️ What ANSE Is NOT (To Avoid Confusion)
+
+ANSE is frequently confused with other AI/robotics projects. **To be crystal clear:**
+
+ANSE is **NOT**:
+- A Vision-Language-Action (VLA) model
+- A robotics brain or motion planner
+- A predictive or learned world model
+- An embodiment solution for LLMs
+- A system that translates natural language into motion
+- An AGI or general-purpose AI research project
+- A complete autonomous system by itself
+
+**The world model in ANSE is not a research concept.** It is a simple, timestamped, deterministic state store (JSON-based) updated by sensor readings. No neural networks. No learning. It is fully auditable.
+
+**ANSE assumes you already have a brain** (an LLM, controller, or decision-making agent). ANSE provides the body that the brain controls safely.
+
+For more detail, see [WHAT_ANSE_IS.md](WHAT_ANSE_IS.md).
+
+---
+
+**What ANSE Actually Provides:**
 
 - **🧠 Nervous System** — Real-time sensor → world model → reflex → actuator loops
 - **📡 WebSocket Backend** — Interface for agents to read sensors and send commands
@@ -69,6 +92,50 @@ ANSE is an open-source **nervous system engine** — the body for your agent bra
 - Consistent APIs for testing with simulation, deploying with real hardware
 - On-device autonomous systems without cloud dependencies
 - Complete audit trails and reproducibility
+
+---
+
+## 💡 Concrete Example: Home Automation Safety
+
+Here's a real setup ANSE supports today:
+
+```
+Hardware:
+  - Temperature sensor (DHT22, Modbus, or any plugin)
+  - Motion sensor (PIR)
+  - Smart plug controlling a fan/heater
+  - Local LLM (Llama, Mistral, or LM Studio)
+
+Reflex Rules (YAML):
+  - IF temperature > 28°C AND motion_detected == true
+    → ALLOW_FAN (permit agent to turn on)
+  
+  - IF motion_detected == false
+    → FORCE_FAN_OFF (override agent; safety rule wins)
+  
+  - IF temperature > 35°C
+    → FORCE_FAN_ON (emergency mode)
+
+Agent Loop:
+  1. Connect: ws://localhost:8001
+  2. Observe: {temperature_c: 27, motion: false, fan_state: "off"}
+  3. Decide: "House is empty; let me cool it"
+  4. Command: {type: "actuator_action", actuator: "fan", state: "on"}
+  5. ANSE evaluates reflexes:
+     - Motion == false → FORCE_FAN_OFF fires
+     - Reflex overrides command
+     - Log: "actuator_override: agent denied by safety rule"
+  6. Agent observes the rejection, learns constraint, waits for motion
+  7. Later: motion detected → Agent retries → Reflex permits → Fan on
+
+Result:
+  ✓ User's safety rules always enforced (reflexes win)
+  ✓ Agent plans at high level; ANSE enforces constraints
+  ✓ Every decision logged and auditable
+  ✓ No surprises; no silent failures
+```
+
+**Key insight:** ANSE is not smart about what to do. ANSE is strict about **how to do it safely.**
 
 ---
 
