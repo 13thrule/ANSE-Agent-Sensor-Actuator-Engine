@@ -3,15 +3,17 @@ Event-Driven Agent - The recommended pattern for ANSE agents.
 
 This example demonstrates:
 - Connecting via WebSocket
-- Listening to world model events (not polling)
+- Listening to state updates (not polling)
 - Reacting to sensor readings
-- Using tools when needed (on-demand, not continuously)
-- Writing to long-term memory
-- Respecting the nervous system model
+- Using tools when needed
+- Recording decisions
+- Respecting the control scaffold model
 
-This is the pattern all autonomous agents should follow.
+This is how autonomous agents should operate:
+Event → Read State → Decide → Act → Log
+
 No polling loops. No sleep(). No while True.
-Just event -> react -> act.
+Just: event happens, agent reacts.
 """
 import asyncio
 import json
@@ -25,13 +27,13 @@ logger = logging.getLogger(__name__)
 
 class EventDrivenAgent:
     """
-    Agent that subscribes to world model events and reacts to them.
+    Agent that subscribes to state updates and reacts to them.
     
-    This is how embodied agents should work:
-    - Listen for sensor events from the world model
-    - React immediately with reflexes or actions
-    - Make strategic decisions based on observed events
-    - Record decisions to long-term memory
+    Pattern:
+    - Connect to ANSE WebSocket
+    - Receive state updates when sensors change
+    - React immediately: read state, decide, act
+    - Record all decisions for audit
     
     No polling. No continuous checking. All event-driven.
     """
@@ -120,25 +122,18 @@ class EventDrivenAgent:
 
     async def listen_and_react(self) -> None:
         """
-        Listen for world model events and react to them.
+        Listen for state updates and react to them.
         
-        This is the main agent loop. It's reactive, not polling:
-        - Wait for world model event
-        - Process the event
+        Main agent loop: reactive, not polling
+        - Receive state update
+        - Process event
         - Take action if needed
-        - Repeat forever
+        - Repeat
         
-        This is fundamentally different from:
-        
-            while True:
-                data = wait_for_input()
-                process()
-                sleep(1)
-        
-        Instead, we use WebSocket as a nerve signal pathway.
+        Uses WebSocket for real-time updates (not polling in a loop).
         """
-        logger.info("🧠 Starting event-driven agent loop")
-        logger.info("Listening for world model events...")
+        logger.info("Starting event-driven agent loop")
+        logger.info("Listening for state updates...")
         
         try:
             async for message in self.websocket:
@@ -149,9 +144,9 @@ class EventDrivenAgent:
                     if event.get("id"):
                         continue
                     
-                    # Handle server-pushed events
-                    if event.get("type") == "world_model_update":
-                        await self._handle_world_model_event(event)
+                    # Handle server-pushed state updates
+                    if event.get("type") == "state_update":
+                        await self._handle_state_update(event)
                     
                 except json.JSONDecodeError:
                     logger.error("Failed to parse event")
@@ -161,20 +156,19 @@ class EventDrivenAgent:
         except Exception as e:
             logger.error(f"Agent error: {e}")
 
-    async def _handle_world_model_event(self, event: Dict[str, Any]) -> None:
+    async def _handle_state_update(self, event: Dict[str, Any]) -> None:
         """
-        React to a world model event.
+        React to a state update.
         
-        The world model tells us what happened in the environment:
-        - Sensor readings: "camera detected motion"
-        - Reflex triggers: "temperature exceeded threshold"
-        - Other agent actions: "robot arm moved"
-        - Our own actions: "we called capture_frame"
+        The state tells us what happened:
+        - Sensor readings: "motion detected"
+        - Rule triggers: "temperature exceeded threshold"
+        - Actuator changes: "fan turned on"
         
-        We react by:
-        1. Evaluating the event relevance
-        2. Deciding what to do
-        3. Taking action (call tools, remember, etc.)
+        We respond by:
+        1. Evaluating relevance
+        2. Deciding action
+        3. Acting (call tools, record decision)
         """
         events = event.get("events", [])
         
@@ -198,7 +192,7 @@ class EventDrivenAgent:
                 logger.debug(f"Unhandled event type: {evt_type}")
 
     async def _on_sensor_reading(self, data: Dict[str, Any]) -> None:
-        """React to sensor data from the world model."""
+        """React to sensor data update."""
         sensor_name = data.get("sensor")
         value = data.get("value")
         

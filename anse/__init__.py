@@ -1,7 +1,8 @@
 """
-ANSE - Agent Nervous System Engine
+ANSE - Autonomous Agent Control System
 
-A local, sandboxed toolbox of sensors and actuators for AI agents.
+A local runtime that connects agent logic to hardware constraints safely.
+Manages sensors, enforces safety rules, controls actuators.
 """
 
 __version__ = "0.1.0"

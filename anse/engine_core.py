@@ -301,7 +301,7 @@ def main():
     """CLI entry point."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="ANSE - Agent Nervous System Engine")
+    parser = argparse.ArgumentParser(description="ANSE - Autonomous Agent Control System")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8765, help="Port to bind to")
     parser.add_argument("--policy", help="Path to safety policy YAML")
